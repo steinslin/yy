@@ -1,0 +1,250 @@
+.home-layout {
+  min-height: 100vh;
+}
+
+.home-sider {
+  overflow: auto;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 16px;
+  border-radius: 8px;
+}
+
+.logo h2 {
+  color: #fff;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.home-menu {
+  border-right: 0;
+}
+
+.home-header {
+  background: #fff;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  transition: left 0.2s;
+  height: 64px;
+  line-height: 64px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+  line-height: normal;
+}
+
+.user-info:hover {
+  background-color: #f5f5f5;
+}
+
+.user-info .ant-avatar {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.home-content {
+  margin-top: 64px;
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+  transition: margin-left 0.2s;
+}
+
+.content-wrapper {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  min-height: calc(100vh - 112px);
+}
+
+.search-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.search-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.search-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.batch-operations {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.batch-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.content-main {
+  margin-top: 24px;
+}
+
+.main-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #999;
+  font-size: 16px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 表格边框样式 */
+.table-section .ant-table {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+/* 表头边框 */
+.table-section .ant-table-thead > tr > th {
+  border-bottom: 1px solid #e8e8e8;
+  border-right: 1px solid #f0f0f0;
+}
+
+.table-section .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+/* 表格行边框 */
+.table-section .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.table-section .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+/* 最后一行不显示底部分割线 */
+.table-section .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 表格单元格边框 */
+.table-section .ant-table-cell {
+  border-right: 1px solid #f0f0f0;
+}
+
+.table-section .ant-table-cell:last-child {
+  border-right: none;
+}
+
+/* 详情弹窗边框样式 */
+.ant-modal .ant-descriptions {
+  border: 1px solid #e8e8e8;
+}
+
+.ant-modal .ant-descriptions-item-label {
+  border-right: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e8e8e8;
+  font-weight: 600;
+}
+
+.ant-modal .ant-descriptions-item-content {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.ant-modal .ant-descriptions-row {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.ant-modal .ant-descriptions-row:last-child {
+  border-bottom: none;
+}
+
+.ant-modal .ant-descriptions-row:last-child .ant-descriptions-item-label,
+.ant-modal .ant-descriptions-row:last-child .ant-descriptions-item-content {
+  border-bottom: none;
+}
+
+/* Modal 边框 */
+.ant-modal-content {
+  border: 1px solid #e8e8e8;
+}
+
+.ant-modal-header {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid #e8e8e8;
+}
