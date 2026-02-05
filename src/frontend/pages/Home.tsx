@@ -251,7 +251,8 @@ const Home = () => {
     {
       key: '1',
       icon: <FileTextOutlined />,
-      label: '凭证管理'
+      label: '凭证管理',
+      onClick: () => navigate('/home')
     },
     {
       key: '2',
@@ -261,7 +262,8 @@ const Home = () => {
     {
       key: '3',
       icon: <MobileOutlined />,
-      label: '设备管理'
+      label: '设备管理',
+      onClick: () => navigate('/devices')
     },
     {
       key: '4',

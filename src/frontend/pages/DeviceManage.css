@@ -1,0 +1,518 @@
+.device-layout {
+  min-height: 100vh;
+}
+
+.device-sider {
+  overflow: auto;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.device-sider .logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 16px;
+  border-radius: 8px;
+}
+
+.device-sider .logo h2 {
+  color: #fff;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.device-menu {
+  border-right: 0;
+}
+
+.device-header {
+  background: #fff;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  transition: left 0.2s;
+  height: 64px;
+  line-height: 64px;
+}
+
+.device-header .header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.device-header .user-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+  line-height: normal;
+}
+
+.device-header .user-info:hover {
+  background-color: #f5f5f5;
+}
+
+.device-content {
+  margin-top: 64px;
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+  transition: margin-left 0.2s;
+}
+
+.device-content-wrapper {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  min-height: calc(100vh - 112px);
+}
+
+/* 顶部搜索行：输入框 + 高级筛选、刷新列表 */
+.device-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.device-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 搜索框 40px：覆盖 antd 默认，包括可能的 wrapper */
+.device-search-row .device-search-input,
+.device-search-row .device-search-input.ant-input,
+.device-search-row .ant-input-affix-wrapper,
+.device-search-row .ant-input-wrapper {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+.device-search-row .ant-input-affix-wrapper .ant-input,
+.device-search-row .ant-input-wrapper .ant-input {
+  height: 100% !important;
+  min-height: unset !important;
+}
+.device-search-row .device-search-input.ant-input {
+  line-height: 38px;
+  box-sizing: border-box;
+}
+
+.device-search-buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 高级筛选、刷新列表 40px */
+.device-search-buttons .ant-btn {
+  height: 40px !important;
+  min-height: 40px !important;
+  line-height: 38px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 下方：新增设备、设备分组（靠右） */
+.device-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.device-toolbar .ant-btn {
+  height: 40px !important;
+  min-height: 40px !important;
+  line-height: 38px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 搜索结果：分组 + 卡片 */
+.device-results {
+  margin-top: 0;
+}
+
+.device-results-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 320px;
+}
+
+.device-group {
+  margin-bottom: 28px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background-color: #fafafa;
+}
+
+.device-group:last-child {
+  margin-bottom: 0;
+}
+
+.device-group-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.device-group-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.device-group-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.device-group-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.device-group-summary-item {
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.device-group-summary-online {
+  color: #389e0d;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.device-group-summary-login {
+  color: #1677ff;
+  background-color: #e6f4ff;
+  border: 1px solid #91caff;
+}
+
+.device-group-summary-task {
+  color: #d46b08;
+  background-color: #fff7e6;
+  border: 1px solid #ffd591;
+}
+
+.device-group-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1677ff;
+  background-color: #e6f4ff;
+  border: 1px solid #91caff;
+  border-radius: 9999px;
+}
+
+.device-group-scroll {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 12px;
+}
+
+.device-group-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.device-group-scroll::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+
+.device-group-scroll::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+/* 设备卡片 宽300px，同排等高、按钮底对齐 */
+.device-card {
+  flex: 0 0 300px;
+  width: 300px;
+  min-height: 0;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.device-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.device-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+/* 在线/维护中/离线 状态 - 前加小圆点 */
+.device-card-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 2px 8px 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.device-card-status::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+  align-self: center;
+  vertical-align: middle;
+}
+.device-card-status--online {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+.device-card-status--online::before {
+  background-color: #52c41a;
+}
+.device-card-status--maintenance {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+.device-card-status--maintenance::before {
+  background-color: #fa8c16;
+}
+.device-card-status--offline {
+  background-color: #f5f5f5;
+  color: #8c8c8c;
+}
+.device-card-status--offline::before {
+  background-color: #8c8c8c;
+}
+
+.device-card-login {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 2px 8px 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.device-card-login::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+  align-self: center;
+  vertical-align: middle;
+}
+
+/* 已登录 - 淡绿 + 绿点 */
+.device-card-login--logged_in {
+  background-color: #d9f7be;
+  color: #389e0d;
+}
+.device-card-login--logged_in::before {
+  background-color: #389e0d;
+}
+
+/* 未登录 - 淡灰 + 灰点 */
+.device-card-login--not_logged_in {
+  background-color: #f5f5f5;
+  color: #8c8c8c;
+}
+.device-card-login--not_logged_in::before {
+  background-color: #8c8c8c;
+}
+
+.device-card-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.device-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.device-card-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.device-card-value {
+  font-size: 14px;
+  color: #333;
+  word-break: break-all;
+}
+
+.device-card-uuid {
+  font-size: 12px;
+  color: #666;
+}
+
+.device-card-work {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid #d6e4ff;
+  border-radius: 8px;
+  background-color: #f0f5ff;
+  flex-shrink: 0;
+}
+
+.device-card-work .device-card-label {
+  margin-bottom: 2px;
+}
+
+.device-card-estimated {
+  font-size: 12px;
+  color: #1890ff;
+  margin-top: 2px;
+}
+
+.device-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.device-card-actions .ant-btn {
+  margin: 0;
+  height: 40px;
+}
+
+/* 查看详情 - 淡蓝 */
+.device-card-actions .device-card-btn-detail {
+  background-color: #91caff;
+  border-color: #91caff;
+  color: #0958d9;
+}
+.device-card-actions .device-card-btn-detail:hover {
+  background-color: #69b1ff;
+  border-color: #69b1ff;
+  color: #fff;
+}
+
+/* 查看画面 - 淡青 */
+.device-card-actions .device-card-btn-screen {
+  background-color: #87e8de;
+  border-color: #87e8de;
+  color: #08979c;
+}
+.device-card-actions .device-card-btn-screen:hover {
+  background-color: #5cdbd3;
+  border-color: #5cdbd3;
+  color: #fff;
+}
+
+/* 下线 - 淡红 */
+.device-card-actions .device-card-btn-offline {
+  background-color: #ffccc7;
+  border-color: #ffccc7;
+  color: #cf1322;
+}
+.device-card-actions .device-card-btn-offline:hover {
+  background-color: #ffa39e;
+  border-color: #ffa39e;
+  color: #fff;
+}
+
+/* 刷新 - 淡绿 */
+.device-card-actions .device-card-btn-refresh {
+  background-color: #b7eb8f;
+  border-color: #b7eb8f;
+  color: #389e0d;
+}
+.device-card-actions .device-card-btn-refresh:hover {
+  background-color: #95de64;
+  border-color: #95de64;
+  color: #fff;
+}
+
+.device-drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 新增设备弹窗 - 自动获取按钮蓝色背景 */
+.add-device-auto-get-btn {
+  background-color: #1677ff !important;
+  color: #fff !important;
+  border: none !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  line-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.add-device-auto-get-btn:hover {
+  background-color: #4096ff !important;
+  color: #fff !important;
+}

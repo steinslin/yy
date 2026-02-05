@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
+import DeviceManage from './pages/DeviceManage'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -26,6 +27,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/devices"
+          element={
+            <ProtectedRoute>
+              <DeviceManage />
             </ProtectedRoute>
           }
         />
