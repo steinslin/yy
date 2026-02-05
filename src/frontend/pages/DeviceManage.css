@@ -516,3 +516,84 @@
   background-color: #4096ff !important;
   color: #fff !important;
 }
+
+/* 设备分组管理页 */
+.device-group-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.device-group-manage-card {
+  border-radius: 8px;
+}
+
+.device-group-manage-card .ant-card-head {
+  min-height: 48px;
+}
+
+.device-group-manage-card-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.device-group-manage-card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.device-group-manage-device-item .ant-list-item-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.device-group-manage-device-item .ant-list-item-action {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 设备分组管理 - 拖拽设备行 */
+.device-group-droppable {
+  outline: none;
+}
+
+.device-group-manage-device-item-draggable {
+  margin-bottom: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.device-group-manage-device-item-draggable:hover {
+  border-color: #d9d9d9;
+}
+
+.device-group-manage-device-item-draggable.device-group-manage-device-item-dragging {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-color: #1677ff;
+}
+
+.device-group-manage-device-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 48px;
+}
+
+.device-group-manage-card-title {
+  cursor: grab;
+}
+
+.device-group-manage-card-title:active {
+  cursor: grabbing;
+}
+
+.device-group-manage-card-wrapper.device-group-manage-card-dragging .device-group-manage-card {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  border-color: #1677ff;
+}

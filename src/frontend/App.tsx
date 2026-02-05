@@ -5,6 +5,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import DeviceManage from './pages/DeviceManage'
+import DeviceGroupManage from './pages/DeviceGroupManage'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -35,6 +36,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DeviceManage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/device-groups"
+          element={
+            <ProtectedRoute>
+              <DeviceGroupManage />
             </ProtectedRoute>
           }
         />
