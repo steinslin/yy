@@ -13,6 +13,7 @@ import {
   Form,
   Select,
   Spin,
+  Progress,
   type MenuProps
 } from 'antd'
 import {
@@ -56,6 +57,17 @@ interface DeviceCardRecord {
   estimatedTime?: string
 }
 
+/** 详情弹窗所需的扩展运行参数（可从后端拉取，此处用 mock） */
+interface DeviceRuntimeDetail {
+  importTime: string
+  runningTime: string
+  /** 存储空间，格式：已用GB / 总容量GB，如 "128GB / 256GB" */
+  storage: string
+  temperature: string
+  installedGames: string[]
+  batteryPercent: number
+}
+
 type GroupType = 'auto' | 'manual'
 
 interface DeviceGroupRecord {
@@ -82,6 +94,21 @@ const WORK_STATUS_MAP: Record<WorkStatusType, string> = {
   task: '执行任务'
 }
 
+/** 根据设备生成详情运行参数（mock，实际可来自接口） */
+function getDeviceRuntimeDetail(device: DeviceCardRecord): DeviceRuntimeDetail {
+  const seed = device.id
+  const totalGB = 256
+  const usedGB = [64, 128, 192, 256][seed % 4]
+  return {
+    importTime: `2024-${String((seed % 12) + 1).padStart(2, '0')}-${String((seed % 28) + 1).padStart(2, '0')} 10:00`,
+    runningTime: `${seed % 7}天${seed % 24}小时`,
+    storage: `${usedGB}GB / ${totalGB}GB`,
+    temperature: `${(seed % 10) + 32}°C`,
+    installedGames: ['王者荣耀', '和平精英', '原神', '崩坏：星穹铁道', '金铲铲之战'].slice(0, (seed % 5) + 1),
+    batteryPercent: (seed % 40) + 55
+  }
+}
+
 const DeviceManage = () => {
   const { logout, loading } = useAuth()
   const navigate = useNavigate()
@@ -95,6 +122,8 @@ const DeviceManage = () => {
   const [addDeviceForm] = Form.useForm()
 
   const [addDeviceVisible, setAddDeviceVisible] = useState(false)
+  const [detailVisible, setDetailVisible] = useState(false)
+  const [detailDevice, setDetailDevice] = useState<DeviceCardRecord | null>(null)
   const systemVersionValue = Form.useWatch('systemVersion', addDeviceForm)
 
   const [advancedFilters, setAdvancedFilters] = useState<{
@@ -236,7 +265,14 @@ const DeviceManage = () => {
   }
 
   const handleDeviceGroup = () => message.info('设备分组功能待对接后端')
-  const handleViewDetail = (device: DeviceCardRecord) => message.info(`查看详情：${device.device_name}`)
+  const handleViewDetail = (device: DeviceCardRecord) => {
+    setDetailDevice(device)
+    setDetailVisible(true)
+  }
+  const handleDetailClose = () => {
+    setDetailVisible(false)
+    setDetailDevice(null)
+  }
   const handleViewScreen = (device: DeviceCardRecord) => message.info(`查看画面：${device.device_name}`)
   const handleOffline = (device: DeviceCardRecord) => message.info(`下线：${device.device_name}`)
   const handleRefreshDevice = (device: DeviceCardRecord) => message.info(`刷新：${device.device_name}`)
@@ -404,7 +440,7 @@ const DeviceManage = () => {
                 onChange={e => addDeviceForm.setFieldValue('systemVersion', e.target.value)}
                 style={{ flex: 1 }}
               />
-              <Button type="button" className="add-device-auto-get-btn" onClick={() => message.info('自动获取功能待对接设备信息')}>自动获取</Button>
+              <Button htmlType="button" className="add-device-auto-get-btn" onClick={() => message.info('自动获取功能待对接设备信息')}>自动获取</Button>
             </div>
           </Form.Item>
           <Form.Item name="deviceGroup" label="设备分组">
@@ -415,6 +451,88 @@ const DeviceManage = () => {
             </Select>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="设备详情"
+        open={detailVisible}
+        onCancel={handleDetailClose}
+        footer={
+          <Button type="primary" onClick={handleDetailClose}>关闭</Button>
+        }
+        destroyOnClose
+        width={560}
+        className="device-detail-modal"
+      >
+        {detailDevice && (() => {
+          const runtime = getDeviceRuntimeDetail(detailDevice)
+          return (
+            <div className="device-detail-content">
+              <div className="device-detail-header">
+                <div className="device-detail-image">
+                  <MobileOutlined />
+                </div>
+                <div className="device-detail-basic">
+                  <h3 className="device-detail-name">{detailDevice.device_name}</h3>
+                  <span className={`device-detail-status device-detail-status--${detailDevice.status}`}>
+                    {STATUS_MAP[detailDevice.status].text}
+                  </span>
+                </div>
+              </div>
+              <div className="device-detail-section">
+                <div className="device-detail-row">
+                  <span className="device-detail-label">设备导入时间</span>
+                  <span className="device-detail-value">{runtime.importTime}</span>
+                </div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">设备运行时间</span>
+                  <span className="device-detail-value">{runtime.runningTime}</span>
+                </div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">设备 UUID</span>
+                  <span className="device-detail-value device-detail-uuid" title={detailDevice.uuid}>{detailDevice.uuid}</span>
+                </div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">系统版本</span>
+                  <span className="device-detail-value">{detailDevice.systemVersion}</span>
+                </div>
+              </div>
+              <div className="device-detail-section">
+                <div className="device-detail-section-title">当前运行参数</div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">存储空间</span>
+                  <span className="device-detail-value">{runtime.storage}</span>
+                </div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">网络 IP</span>
+                  <span className="device-detail-value">{detailDevice.ip}</span>
+                </div>
+                <div className="device-detail-row">
+                  <span className="device-detail-label">温度</span>
+                  <span className="device-detail-value">{runtime.temperature}</span>
+                </div>
+                <div className="device-detail-row device-detail-row--games">
+                  <span className="device-detail-label">已安装游戏</span>
+                  <div className="device-detail-value">
+                    {runtime.installedGames.length > 0
+                      ? <ul className="device-detail-games">{runtime.installedGames.map((g, i) => <li key={i}>{g}</li>)}</ul>
+                      : <span className="device-detail-empty">暂无</span>}
+                  </div>
+                </div>
+                <div className="device-detail-row device-detail-row--battery">
+                  <span className="device-detail-label">设备电量</span>
+                  <div className="device-detail-value">
+                    <Progress
+                      percent={runtime.batteryPercent}
+                      showInfo
+                      strokeColor={runtime.batteryPercent > 20 ? undefined : '#ff4d4f'}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </Modal>
 
       <Drawer

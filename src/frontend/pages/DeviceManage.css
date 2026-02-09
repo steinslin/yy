@@ -597,3 +597,135 @@
   box-shadow: 0 6px 16px rgba(0,0,0,0.12);
   border-color: #1677ff;
 }
+
+/* 设备详情弹窗 */
+.device-detail-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.device-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.device-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.device-detail-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e4e7ed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: #8c8c8c;
+  flex-shrink: 0;
+}
+
+.device-detail-basic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.device-detail-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.device-detail-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: fit-content;
+}
+
+.device-detail-status--online {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.device-detail-status--maintenance {
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.device-detail-status--offline {
+  background: #f5f5f5;
+  color: #8c8c8c;
+  border: 1px solid #d9d9d9;
+}
+
+.device-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.device-detail-section-title {
+  font-weight: 600;
+  color: #1f1f1f;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.device-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.device-detail-row--games,
+.device-detail-row--battery {
+  align-items: flex-start;
+}
+
+.device-detail-label {
+  flex-shrink: 0;
+  width: 100px;
+  color: #8c8c8c;
+}
+
+.device-detail-value {
+  flex: 1;
+  color: #1f1f1f;
+  word-break: break-all;
+}
+
+.device-detail-uuid {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.device-detail-games {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.device-detail-games li {
+  margin-bottom: 4px;
+}
+
+.device-detail-empty {
+  color: #bfbfbf;
+}
+
+.device-detail-row--battery .device-detail-value {
+  min-width: 0;
+  flex: 1;
+}
