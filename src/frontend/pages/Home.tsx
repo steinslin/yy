@@ -60,7 +60,7 @@ const Home = () => {
   // 搜索表单状态
   const [searchForm, setSearchForm] = useState({
     gameName: '',
-    gameCode: '',
+    appId: '',
     tierName: '',
     status: undefined,
     inTimeRange: null as [any, any] | null,
@@ -94,9 +94,9 @@ const Home = () => {
       width: 120
     },
     {
-      title: '游戏编码',
-      dataIndex: 'game_code',
-      key: 'game_code',
+      title: '应用ID',
+      dataIndex: 'app_id',
+      key: 'app_id',
       width: 120
     },
     {
@@ -317,8 +317,8 @@ const Home = () => {
       if (searchForm.gameName) {
         params.game_name = searchForm.gameName
       }
-      if (searchForm.gameCode) {
-        params.game_code = searchForm.gameCode
+      if (searchForm.appId) {
+        params.app_id = searchForm.appId
       }
       if (searchForm.tierName) {
         params.tier_name = searchForm.tierName
@@ -434,8 +434,8 @@ const Home = () => {
           if (searchForm.gameName) {
             params.game_name = searchForm.gameName
           }
-          if (searchForm.gameCode) {
-            params.game_code = searchForm.gameCode
+          if (searchForm.appId) {
+            params.app_id = searchForm.appId
           }
           if (searchForm.tierName) {
             params.tier_name = searchForm.tierName
@@ -492,7 +492,7 @@ const Home = () => {
       const headers = [
         'ID',
         '游戏名称',
-        '游戏编码',
+        '应用ID',
         '档位名称',
         '档位价格',
         '档位编码',
@@ -529,7 +529,7 @@ const Home = () => {
           return [
             row.id ?? '',
             `"${(row.game_name ?? '').replace(/"/g, '""')}"`,
-            `"${(row.game_code ?? '').replace(/"/g, '""')}"`,
+            `"${(row.app_id ?? '').replace(/"/g, '""')}"`,
             `"${(row.tier_name ?? '').replace(/"/g, '""')}"`,
             row.tier_price ?? '',
             `"${(row.tier_code ?? '').replace(/"/g, '""')}"`,
@@ -642,7 +642,7 @@ const Home = () => {
   const handleReset = () => {
     setSearchForm({
       gameName: '',
-      gameCode: '',
+      appId: '',
       tierName: '',
       status: undefined,
       inTimeRange: null,
@@ -710,12 +710,12 @@ const Home = () => {
                     />
                   </div>
                   <div className="search-form-item">
-                    <label className="search-label">游戏编码</label>
+                    <label className="search-label">应用ID</label>
                     <Input
-                      placeholder="请输入游戏编码"
-                      value={searchForm.gameCode}
+                      placeholder="请输入应用ID"
+                      value={searchForm.appId}
                       onChange={e => {
-                        setSearchForm({ ...searchForm, gameCode: e.target.value })
+                        setSearchForm({ ...searchForm, appId: e.target.value })
                       }}
                       style={{ width: 288 }}
                     />
@@ -878,7 +878,7 @@ const Home = () => {
         {detailRecord && (
           <Descriptions column={2} bordered>
             <Descriptions.Item label="游戏名称">{detailRecord.game_name ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="游戏编码">{detailRecord.game_code ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="应用ID">{detailRecord.app_id ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="档位名称">{detailRecord.tier_name ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="档位价格">
               {detailRecord.tier_price ? `¥${Number(detailRecord.tier_price).toFixed(2)}` : '-'}

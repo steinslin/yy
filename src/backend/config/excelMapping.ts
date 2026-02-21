@@ -24,8 +24,8 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     required: true
   },
   {
-    excelColumn: '游戏编码',
-    dbField: 'game_code',
+    excelColumn: '应用ID',
+    dbField: 'app_id',
     required: true
   },
   {

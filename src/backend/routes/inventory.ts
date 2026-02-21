@@ -37,7 +37,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       page = 1,
       pageSize = 10,
       game_name: gameName,
-      game_code: gameCode,
+      app_id: appId,
       tier_name: tierName,
       status,
       in_account: inAccount,
@@ -53,7 +53,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     console.log('  - page:', page)
     console.log('  - pageSize:', pageSize)
     console.log('  - gameName:', gameName)
-    console.log('  - gameCode:', gameCode)
+    console.log('  - appId:', appId)
     console.log('  - tierName:', tierName)
     console.log('  - status:', status, '(type:', typeof status, ')')
     console.log('  - inAccount:', inAccount)
@@ -80,9 +80,9 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       params.push(`%${String(gameName).trim()}%`)
     }
 
-    if (gameCode && String(gameCode).trim()) {
-      conditions.push('game_code LIKE ?')
-      params.push(`%${String(gameCode).trim()}%`)
+    if (appId && String(appId).trim()) {
+      conditions.push('app_id LIKE ?')
+      params.push(`%${String(appId).trim()}%`)
     }
 
     if (tierName && String(tierName).trim()) {
