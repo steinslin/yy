@@ -70,7 +70,7 @@
 
 ### 2. POST `/api/products/get`
 
-获取商品信息列表。请求体可传 **app_id** 按应用过滤；不传则返回全部。会附带 **device_info**。
+获取商品信息列表。请求体可传 **app_id** 按应用过滤；不传则返回全部。
 
 **请求体示例**：
 ```json
@@ -87,7 +87,6 @@
   "products": [
     {
       "product_id": "prodios_1",
-      "title": "prodios_1",
       "name": "Hot Package1",
       "price": "0.99",
       "quantity": 99,
@@ -99,8 +98,6 @@
 ```
 
 **异常返回**：`code != 0` + `message`。
-
-**异常时插件行为**：主界面弹窗展示 `message` 或「加载失败」；浮窗列表失败时不弹窗、仅不刷新列表。
 
 ---
 
