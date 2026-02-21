@@ -1,66 +1,81 @@
 # WEDO 服务器接口文档（采集入库 / 出库）
 
-服务端需实现的 HTTP 接口，Base URL 默认 `http://192.168.6.166:5000`。
-
-**通用约定**：
-- Content-Type：`application/json; charset=utf-8`
-- 无真实登录：业务以设备标识为主，请求中的 `token` 一般为**设备 IP**（WiFi 优先）
-- 插件可能自动在 body 中附带 `device_info`（device_ip、device_udid、device_name 等），服务端可按需使用
+服务端需实现的 HTTP 接口，Base URL 默认 `http://192.168.6.166:5000`。  
+本文档面向**实现服务器接口的同事**，仅描述请求/响应约定。**共 7 个接口**（见下方路由一览）。
 
 ---
 
-## 一、采集入库（WEDO 采集入库）
+## 通用约定
 
-单一插件，合并「采集」与「入库」：打开 App 时自动拉取内购档位并上报、写入本地 plist；入库界面优先从本地 plist 读档位，无本地数据时才请求 `/api/caijiruku/products`。支持真实内购与凭证上传。
+- **Content-Type**：`application/json; charset=utf-8`
+- **成功**：响应 body 中 **`code == 0`** 表示成功；出库拉凭证成功为 `code == 0` 且带 `data.new_receipt`；其余（如 1、400）表示业务失败。
+- 插件向服务器发起的**所有请求**都会在 body 中附带 **device_info**（采集上报由采集模块合并，日志由各模块合并，其余由 HttpHelper 自动合并），服务端可按需使用或用于日志排查。
+- 档位相关接口：`/api/products/get` 与 `/api/products/collect` 使用同一套档位字段命名（见下表）。
+
+**档位字段说明**（products 与 collect 共用）：
+
+| 字段 | 含义 | 示例值 |
+|------|------|--------|
+| **app_id** | 应用包名（CFBundleIdentifier） | `com.lastwar.ios` |
+| **product_id** | 内购商品 ID（= StoreKit 的 productIdentifier） | `prodios_1` |
+| **name** | 商品展示名（仅 UI 显示） | `Hot Package1` |
+| **price** | 价格字符串 | `0.99` |
+| **quantity** | 数量 | `99` |
+| **app_name** | 应用展示名 | `Last War` |
+
+**路由一览**：
+
+| 路由 | 说明 |
+|------|------|
+| `POST /api/products/collect` | 采集商品信息并上传至服务器 |
+| `POST /api/products/get` | 获取商品信息列表 |
+| `POST /api/receipts/upload` | 上传内购凭证到服务器 |
+| `POST /api/receipts/get` | 获取内购凭证 |
+| `POST /api/receipts/consume` | 消费凭证 |
+| `POST /api/receipts/invalid` | 上报无效凭证 |
+| `POST /api/device_log` | 设备日志上报（含 device_info） |
 
 ---
 
-### 1. POST `/api/caijiruku/login`
+## 一、采集入库
 
-**功能**：插件内「伪登录」入口。用户点击登录后调用，用于通过校验并写入本地“已登录”状态；不要求真实账号体系，服务端返回成功即可。
+### 1. POST `/api/products/collect`
+
+采集商品信息并上传至服务器。
 
 **请求体示例**：
 ```json
 {
-  "token": "192.168.1.100",
-  "client": "ios",
-  "device_id": "xxxx",
-  "version": "0.9-6"
-}
-```
-
-**返回体示例（最低可用）**：
-```json
-{
-  "code": 200,
-  "data": {
-    "userInfo": {}
-  }
-}
-```
-说明：`code == 200` 且 `data.userInfo` 存在即可，`userInfo` 可为空对象，插件仅据此认为登录成功。
-
----
-
-### 2. POST `/api/caijiruku/collect`
-
-**功能**：采集上报。App 拉取到内购商品信息后，将档位列表上报到服务端；同时插件会写入本地 plist（按 productId 去重），供入库界面使用。
-
-**请求体示例**：
-```json
-{
-  "bundleId": "com.example.game",
-  "bundleName": "游戏名",
+  "app_id": "com.lastwar.ios",
+  "app_name": "Last War",
   "products": [
     {
-      "productId": "com.example.product_1",
-      "productName": "礼包A",
-      "productDescription": "描述",
-      "price": "6.00",
-      "currency": "CNY",
-      "currencySymbol": "¥"
+      "product_id": "prodios_1",
+      "name": "Hot Package1",
+      "price": "0.99",
+      "quantity": 99
     }
   ]
+}
+```
+会附带 **device_info**。
+
+**返回体（成功）**：`{ "code": 0, "message": "ok" }`
+
+**异常返回**：`code != 0`（如 `1`）+ `message`（如 "products 为空"）。
+
+**异常时插件行为**：不弹窗，仅写本地日志「上传失败: message」，档位仍会写入本地 plist 供入库使用。
+
+---
+
+### 2. POST `/api/products/get`
+
+获取商品信息列表。请求体可传 **app_id** 按应用过滤；不传则返回全部。会附带 **device_info**。
+
+**请求体示例**：
+```json
+{
+  "app_id": "com.lastwar.ios"
 }
 ```
 
@@ -68,242 +83,265 @@
 ```json
 {
   "code": 0,
-  "message": "ok"
-}
-```
-失败时插件会记“上传失败”日志；可返回 `code != 0` 及 `message` 说明原因。
-
----
-
-### 3. POST `/api/caijiruku/products`
-
-**功能**：拉取商品/礼包列表。主界面在**无本地 plist 档位**时才会请求；浮窗列表会直接请求。返回的列表用于展示可购买档位（title、gold、money、num 等）。
-
-**请求体示例**：
-```json
-{
-  "token": "192.168.1.100",
-  "game_id": "1"
-}
-```
-或浮窗场景：
-```json
-{
-  "token": "192.168.1.100",
-  "productIdentifier": "com.example.game"
-}
-```
-
-**返回体示例**：
-```json
-{
-  "code": 200,
-  "data": [
+  "message": "Success",
+  "products": [
     {
-      "title": "com.example.product_1",
-      "gold": "礼包A",
-      "money": "6",
-      "num": "99",
-      "buy_id": "com.example.product_1"
-    }
-  ],
-  "msg": ""
-}
-```
-`data` 为数组，每项需含 `title`（商品 ID）、`gold`（展示名）、`money`、`num` 等入库界面所需字段。
-
----
-
-### 4. POST `/api/caijiruku/receipts`
-
-**功能**：上传内购凭证。用户在入库侧完成购买（或使用已有凭证）后，将凭证上传到服务端保存，供出库拉取使用。
-
-**请求体示例**：
-```json
-{
-  "token": "192.168.1.100",
-  "localizedTitle": "com.example.product_1",
-  "productIdentifier": "com.example.game",
-  "transactionDate": "2026-02-11 17:30:26",
-  "transactionIdentifier": "470003053702685",
-  "transactionReceipt": "base64...",
-  "newTransactionReceipt": "base64..."
-}
-```
-可能附带 `device_info` 等字段。
-
-**返回体示例**：
-```json
-{
-  "code": 200,
-  "message": "上传成功"
-}
-```
-若需让插件清除本地并提示重新登录，可返回 `auth: false`（按插件实现处理）。
-
----
-
-## 二、出库（WEDO 出库）
-
----
-
-### 1. POST `/api/chuku/login`
-
-**功能**：与采集入库类似，为出库侧「伪登录」入口，仅需返回成功即可。
-
-**请求体示例**：同 caijiruku，含 `token`、`client`、`device_id`、`version` 等。
-
-**返回体示例（最低可用）**：
-```json
-{
-  "code": 200,
-  "data": {
-    "userInfo": {}
-  }
-}
-```
-
----
-
-### 2. POST `/api/chuku/products`
-
-**功能**：出库浮窗拉取礼包列表，用于展示可出库的档位。
-
-**请求体示例**：
-```json
-{
-  "token": "192.168.1.100",
-  "productIdentifier": "com.example.game"
-}
-```
-
-**返回体示例**：
-```json
-{
-  "code": 200,
-  "data": [
-    {
-      "title": "com.example.product_1",
-      "gold": "礼包A",
-      "money": "6",
-      "num": "99"
+      "product_id": "prodios_1",
+      "title": "prodios_1",
+      "name": "Hot Package1",
+      "price": "0.99",
+      "quantity": 99,
+      "app_id": "com.lastwar.ios",
+      "app_name": "Last War"
     }
   ]
 }
 ```
-格式与 caijiruku/products 的 `data` 一致即可。
+
+**异常返回**：`code != 0` + `message`。
+
+**异常时插件行为**：主界面弹窗展示 `message` 或「加载失败」；浮窗列表失败时不弹窗、仅不刷新列表。
 
 ---
 
-### 3. POST `/api/chuku/receipt`
+### 3. POST `/api/receipts/upload`
 
-**功能**：出库拉单笔凭证。根据请求中的 `bundle_id`、`title`（商品 ID）从已上传的凭证中匹配一条（**必须同 bundle_id 且同 product_id**），返回后该凭证从可用池中移除。若无匹配凭证则返回失败，插件会走失败逻辑（如上报 invalid）。
+上传内购凭证到服务器。字段命名与其它接口一致（**app_id**、**product_id** 等），仅使用下列规范字段。
+
+**请求体字段**：
+
+| 字段 | 含义 | 必传 | 说明 |
+|------|------|------|------|
+| **app_id** | 应用包名（同 products） | 是 | CFBundleIdentifier |
+| **product_id** | 内购商品 ID | 是 | StoreKit productIdentifier |
+| **transaction_date** | 交易时间 | 是 | 格式 `yyyy-MM-dd HH:mm:ss` |
+| **transaction_id** | 交易号（苹果 transactionIdentifier） | 是 | 唯一标识一笔交易 |
+| **new_receipt** | 新凭证 Base64 | 是 | appStoreReceiptURL 获取的整单凭证 |
+| **receipt** | 旧凭证 Base64 | 否 | 单笔 transaction 的 transactionReceipt |
+
+**请求体示例**（会附带 **device_info**）：
+```json
+{
+  "app_id": "com.lastwar.ios",
+  "product_id": "prodios_1",
+  "transaction_date": "2026-02-11 17:30:26",
+  "transaction_id": "470003053702685",
+  "new_receipt": "base64...",
+  "receipt": "base64..."
+}
+```
+
+**返回体（成功）**：`{ "code": 0, "message": "上传成功" }`
+
+**异常返回**：`code != 0`（如 `1`）+ `message`。
+
+**异常时插件行为**：弹窗展示 `message`；凭证保留在「上传失败列表」可再次恢复上传。
+
+---
+
+## 二、出库
+
+### 1. POST `/api/receipts/get`
+
+获取内购凭证。根据请求中的 **app_id**、**product_id** 从已上传凭证中匹配一条（同 app_id 且同 product_id），返回后该凭证从可用池中移除。请求体会附带 **device_info**。字段命名与 products 等接口一致（app_id、product_id、name）。
+
+**请求体字段**：
+
+| 字段 | 含义 | 必传 |
+|------|------|------|
+| **app_id** | 应用包名（同 products 的 app_id） | 是 |
+| **product_id** | 内购商品 ID，用于匹配凭证 | 是 |
+| **name** | 商品展示名，仅辅助 | 否 |
+| **token** | 可选，客户端可传 | 否 |
 
 **请求体示例**：
 ```json
 {
-  "token": "192.168.1.100",
-  "bundle_id": "com.example.game",
-  "product_name": "礼包A",
-  "title": "com.example.product_1"
+  "app_id": "com.lastwar.ios",
+  "product_id": "prodios_1",
+  "name": "Hot Package1"
 }
 ```
+
+**返回体字段（成功时 data 内）**：
+
+| 字段 | 含义 |
+|------|------|
+| **receipt_id** | 凭证记录 ID（同条凭证上报 invalid/consume 时传此 id） |
+| **transaction_id** | 交易号（如苹果 transactionIdentifier） |
+| **created_at** | 交易时间，格式 `yyyy-MM-dd HH:mm:ss` |
+| **new_receipt** | 新凭证 Base64 字符串，不可为 null |
+| **receipt** | 旧凭证 Base64 字符串 |
 
 **返回体示例（成功）**：
 ```json
 {
-  "code": 200,
+  "code": 0,
   "data": {
-    "id": "1",
-    "identifier": "470003053702685",
-    "start_time": "2026-02-11 17:30:26",
+    "receipt_id": "1",
+    "transaction_id": "470003053702685",
+    "created_at": "2026-02-11 17:30:26",
     "new_receipt": "MIIUKQYJKoZIhvcNAQcCoIIU...",
     "receipt": "ewoJInNpZ25hdHVyZSIgPSAiQkVJ..."
   }
 }
 ```
-`new_receipt`、`receipt` 为 Base64 字符串，不可为 `null`，否则插件会判为失败。
 
-**返回体示例（无可用凭证）**：
+**返回体（无可用凭证）**：`{ "code": 400, "message": "暂无可用凭证，请先在入库完成购买并上传凭证" }`（HTTP 状态码仍为 200）
+
+**异常时插件行为**：  
+- **有苹果弹窗流程**（真实/系统交易）：将交易状态设为 Failed，回调给游戏，不交付凭证。  
+- **无苹果弹窗流程**（浮窗点出库）：上报 invalid（`err_code: no_receipt`），并交付「已购买 + 空收据」给游戏以触发游戏侧支付失败提示。
+
+---
+
+### 2. POST `/api/receipts/invalid`
+
+上报无效凭证（如拉到的凭证无法使用）。请求体会附带 **device_info**。
+
+**请求体字段**：
+
+| 字段 | 含义 | 必传 |
+|------|------|------|
+| **id** | 凭证记录 ID（即 receipts/get 返回的 receipt_id） | 是 |
+| **err_code** | 错误码，如 `no_receipt` | 是 |
+| **err_msg** | 错误描述 | 是 |
+| **token** | 可选 | 否 |
+
+**请求体示例**：
 ```json
 {
-  "code": 400,
-  "message": "暂无可用凭证，请先在入库完成购买并上传凭证"
+  "id": "1",
+  "err_code": "no_receipt",
+  "err_msg": "wrong_product"
 }
 ```
 
+**返回体（成功）**：`{ "code": 0 }`
+
+**异常返回**：一般仍返回 `code: 0` 即可；若返回 `code != 0`，插件仅打日志，不重试。
+
 ---
 
-### 4. POST `/api/chuku/receipt/invalid`
+### 3. POST `/api/receipts/consume`
 
-**功能**：出库侧上报「无效凭证」（如拉到的凭证无法使用），仅记录或统计用。
+消费凭证（上报凭证已消费成功）。请求体会附带 **device_info**。
 
-**请求体**：插件会带 `id`、`err_code`、`err_msg` 等，具体以插件为准。
+**请求体字段**：
 
-**返回体示例**：
+| 字段 | 含义 | 必传 |
+|------|------|------|
+| **id** | 凭证记录 ID（即 receipts/get 返回的 receipt_id） | 是 |
+| **token** | 可选 | 否 |
+
+**请求体示例**：
 ```json
 {
-  "code": 200
+  "id": "1"
 }
 ```
 
+**返回体（成功）**：`{ "code": 0 }`
+
+**异常返回**：一般仍返回 `code: 0` 即可；若返回 `code != 0`，插件仅打日志，不重试。
+
 ---
 
-### 5. POST `/api/chuku/receipt/consumption`
+## 三、设备日志
 
-**功能**：出库侧上报「凭证已消费成功」，用于服务端记账或统计。
+### POST `/api/device_log`
 
-**请求体**：插件会带凭证 `id` 等，具体以插件为准。
+设备侧调试/运行日志上报，插件内所有“上传日志”统一走此接口，便于服务端排查问题。**插件实际行为与下述说明一致**：出库插件发送 `message`、`tag=chuku`、`level=info` 或 `error` 及 **device_info**；采集入库插件发送 `message`、`tag=ruku` 及 **device_info**（入库侧不传 `level`）。请求体**必含 device_info**，以及下列业务字段。
 
-**返回体示例**：
+**请求体字段说明**：
+
+| 字段 | 含义 | 是否必传 | 说明 |
+|------|------|----------|------|
+| **message** | 日志正文 | 是 | 一条日志的文本内容，描述当时发生的事件或状态。 |
+| **tag** | 日志来源标识 | 是 | 区分来自哪个插件/模块，见下表枚举。 |
+| **level** | 日志级别 | 否 | 出库插件会传；采集入库侧部分调用不传。见下表枚举。 |
+| **device_info** | 设备信息 | 是 | 与其余接口一致，见本文档「五、device_info 结构」。 |
+
+**tag 枚举**（服务端可按 tag 过滤或分类存储）：  
+- **chuku**：来自**出库插件**（mytweakchuku）。  
+- **ruku**：来自**采集入库插件**（mrtweak）。
+
+| 取值 | 含义 | 谁上报、何时上报 | 典型 message 内容 |
+|------|------|------------------|-------------------|
+| **chuku** | 出库插件（mytweakchuku）的日志标识。 | 出库插件在关键节点上报：如 finishTransaction 时（假交易消耗/未消耗、系统交易成功或失败）、出库请求失败、无凭证时交付空收据、出库成功交付给游戏、Midas 回调 setResultMsg/setIapError 等。会带 **level**（info/error）及 **device_info**。 | `finishTransaction: 假交易已消耗，已上报 consumption`、`出库成功交付: state=Purchased identifier=xxx`、`无凭证(错误档位): 已上报 invalid...`、`Midas setIapError（消费失败原因）: xxx` |
+| **ruku** | 采集入库插件（mrtweak）的日志标识。 | 采集入库侧通过 HttpHelper 的 `sendDebugLogToServer:` 上报，**不会**带 `level` 字段；调用时机由业务决定（如调试输出、异常信息等）。会带 **device_info**。 | 由调用方传入的任意 message 文本，无固定格式。 |
+
+**level 枚举**（仅出库插件会带，采集侧可能不传）：
+
+| 取值 | 含义 |
+|------|------|
+| `info` | 一般信息，如流程节点、成功状态。 |
+| `error` | 错误或异常，如请求失败、无凭证、消费失败原因等。 |
+
+**message 内容举例**（仅供参考，实际以插件为准）：
+
+- 出库流程：`finishTransaction: 假交易已消耗，已上报 consumption`、`出库成功交付: state=Purchased identifier=xxx`、`无凭证(错误档位): 已上报 invalid，交付空收据以触发支付失败弹窗 product=xxx`。
+- 错误类：`出库请求失败或无效数据: error=xxx product=xxx`、`Midas setIapError（消费失败原因）: xxx`。
+
+**请求体示例**（会附带 **device_info**）：
 ```json
 {
-  "code": 200
+  "message": "finishTransaction: 假交易已消耗，已上报 consumption",
+  "tag": "chuku",
+  "level": "info"
 }
 ```
 
----
+**返回体（成功）**：`{ "code": 0 }`
 
-## 三、返回约定小结
+**异常返回**：建议始终返回 `code: 0`，因插件不解析 device_log 的失败；若返回 `code != 0`，插件无重试、无弹窗，仅请求结束。
 
-| 场景           | 成功                     | 失败                         |
-|----------------|--------------------------|------------------------------|
-| 采集 collect   | `code == 0`, `message`   | `code != 0`                  |
-| 其余接口       | `code == 200`            | `code != 200`，可带 `message` |
-| 出库 receipt   | 必须带有效 `data.new_receipt`（非空字符串） | 无凭证或无效时 `code == 400` |
+**异常时插件行为**：不解析响应 body，不弹窗、不重试；仅发起一次 POST 即结束。
 
 ---
 
-## 四、device_info（可选）
+## 四、接口与插件行为核对（7 个接口）
 
-插件可能在部分请求 body 中自动合并以下字段，服务端可按需使用：
+| 接口 | 插件传参是否按文档 | 文档约定响应后插件行为 |
+|------|--------------------|------------------------|
+| **products/collect** | 是。入库采集发送 `app_id`、`app_name`、`products[]`（含 `product_id`、`name`、`price`、`quantity`）及 device_info。 | 成功：写本地档位；失败：仅写本地日志「上传失败: message」。 |
+| **products/get** | 是。主界面与浮窗均发送 `app_id`（及 device_info）。 | 成功：用 `products`/`data` 刷新列表；失败：主界面弹窗 `message`，浮窗仅不刷新列表。 |
+| **receipts/upload** | 是。仅发送规范字段：`app_id`、`product_id`、`transaction_date`、`transaction_id`、`new_receipt`、`receipt`（及 token、device_info）。 | 成功：弹窗 message、回调成功；失败：弹窗 message，凭证可恢复上传。 |
+| **receipts/get** | 是。出库发送 `app_id`、`product_id`、`name`、`token` 及 device_info。 | 成功且 `data.new_receipt` 非空：交付凭证给游戏；否则：上报 invalid、交付空收据或设交易 Failed。 |
+| **receipts/invalid** | 是。发送 `id`、`err_code`、`err_msg`、`token` 及 device_info。 | 仅发请求，不解析业务返回。 |
+| **receipts/consume** | 是。发送 `id`、`token` 及 device_info。 | 仅发请求，不解析业务返回。 |
+| **device_log** | 是。发送 `message`、`tag`（chuku/ruku）、出库带 `level`，以及 device_info。 | 不解析返回，不重试。 |
 
-| 字段             | 说明                |
-|------------------|---------------------|
-| device_ip        | 设备 IP（WiFi 优先） |
-| device_udid      | 设备 UDID           |
-| device_name      | 设备名称            |
-| device_model     | 机型                |
-| device_system    | 系统版本            |
+---
+
+## 五、返回约定小结
+
+**成功**：统一为 `code: 0`；部分接口带 `message` 或 `data`。
+
+**异常返回格式**（HTTP 状态码建议仍为 200，由 body 区分业务成败）：
+- **`code`**：非 0 表示业务失败（如 `1`、`400`）。
+- **`message`**：错误说明，供插件弹窗或写日志（**统一使用 message**，勿用 msg）。
+
+| 场景 | 成功 | 异常返回 | 插件异常行为（概要） |
+|------|------|----------|----------------------|
+| products/collect | `code == 0`, `message` | `code != 0` + `message` | 仅写本地日志「上传失败: message」 |
+| products/get | `code == 0` + `data`/`products` | `code != 0` + `message` | 主界面弹窗 message；浮窗仅不刷新列表 |
+| receipts/upload | `code == 0`, `message` | `code != 0` + `message` | 弹窗 message；凭证可恢复上传 |
+| receipts/get | `code == 0` + `data.new_receipt` 非空 | `code == 400` + `message` 或无 data | 交易设 Failed 或上报 invalid + 交付空收据 |
+| receipts/invalid、receipts/consume | `code == 0` | 建议仍 `code: 0`；若 `code != 0` + `message` | 仅打日志，不重试 |
+| device_log | `code == 0` | 建议始终 `code: 0` | 不解析、不弹窗、不重试 |
+
+---
+
+## 六、device_info 结构
+
+所有请求 body 中均可能包含 **device_info**，服务端可按需使用：
+
+| 字段 | 说明 |
+|------|------|
+| device_ip | 设备 IP（WiFi 优先） |
+| device_udid | 设备 UDID |
+| device_name | 设备名称 |
+| device_model | 机型 |
+| device_system | 系统版本 |
 | device_vendor_id | identifierForVendor |
-
----
-
-## 五、插件安装说明
-
-| 组合                   | 说明 |
-|------------------------|------|
-| 采集入库               | 单插件即可完成采集 + 入库；档位优先本地 plist，无则请求 products。 |
-| 采集入库 + 出库 同机装 | **会冲突**（均 hook 支付等），不建议同时安装。 |
-| 建议                   | 需要出库时，只装出库插件；需要采集+入库时，只装采集入库插件。 |
-
----
-
-## 六、已移除的接口
-
-以下接口已从服务端移除，插件内若有调用会得到 404，可按需在插件中删除对应请求：
-
-- `POST /api/caijiruku/support`（原用于“支持游戏”校验，插件侧已未使用）
-- `POST /api/caijiruku/log`（原用于设备调试日志上报，插件侧未调用）
-- `POST /api/chuku/support`
-- `POST /api/chuku/log`
