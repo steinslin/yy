@@ -9,8 +9,17 @@ import { testConnection } from './config/database'
 const app: Application = express()
 const port = process.env.PORT ?? 3000
 
-// 中间件
-app.use(cors())
+// 跨域：允许所有来源，或通过 CORS_ORIGIN 指定（多个用逗号分隔）
+const corsOrigin = process.env.CORS_ORIGIN
+const corsOptions: cors.CorsOptions = {
+  origin: corsOrigin
+    ? corsOrigin.split(',').map((o) => o.trim())
+    : true, // true 表示允许任意 origin
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true
+}
+app.use(cors(corsOptions))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 // 增加请求体大小限制以支持文件上传
