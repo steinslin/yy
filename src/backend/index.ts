@@ -4,6 +4,7 @@ import bodyParser from 'body-parser'
 import authRoutes from './routes/auth'
 import inventoryRoutes from './routes/inventory'
 import productsRoutes from './routes/products'
+import receiptsRoutes from './routes/receipts'
 import { testConnection } from './config/database'
 
 const app: Application = express()
@@ -39,6 +40,9 @@ app.use('/api/inventory', inventoryRoutes)
 
 // 商品采集路由（无需 token）
 app.use('/api/products', productsRoutes)
+
+// 收据上传路由
+app.use('/api/receipts', receiptsRoutes)
 
 // 定义一个类型化的路由
 interface User {
