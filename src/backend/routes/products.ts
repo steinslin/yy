@@ -22,7 +22,18 @@ router.post('/collect', async (req: Request, res: Response) => {
       const productId = p?.product_id != null ? String(p.product_id).trim() : ''
       const name = p?.name != null ? String(p.name).trim() : ''
       const price = p?.price != null ? String(p.price).trim() : ''
-      const quantity = typeof p?.quantity === 'number' ? Math.max(0, Math.floor(p.quantity)) : 0
+      const q = p?.quantity
+      const quantity = typeof q === 'number' && Number.isFinite(q) ? Math.max(0, Math.floor(q)) : 0
+
+      // 根据 app_id + product_id 判断是否已存在，存在则跳过
+      const [existing] = await pool.execute(
+        'SELECT 1 FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1',
+        [appIdStr, productId]
+      )
+      if (Array.isArray(existing) && existing.length > 0) {
+        continue
+      }
+
       await pool.execute(sql, [appIdStr, appNameStr, productId, name, price, quantity])
     }
 
