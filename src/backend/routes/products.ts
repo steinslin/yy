@@ -7,8 +7,10 @@ const router = express.Router()
 router.post('/collect', async (req: Request, res: Response) => {
   try {
     const { app_id: appId, app_name: appName, products } = req.body ?? {}
+    console.log('/collect', req.body)
 
     if (!products || !Array.isArray(products) || products.length === 0) {
+      console.log('/collect products 为空')
       return res.status(200).json({ code: 1, message: 'products 为空' })
     }
 
@@ -33,9 +35,10 @@ router.post('/collect', async (req: Request, res: Response) => {
       if (Array.isArray(existing) && existing.length > 0) {
         continue
       }
-
       await pool.execute(sql, [appIdStr, appNameStr, productId, name, price, quantity])
     }
+
+    console.log('/collect success')
 
     return res.status(200).json({ code: 0, message: 'ok' })
   } catch (err) {
@@ -48,6 +51,7 @@ router.post('/collect', async (req: Request, res: Response) => {
 router.post('/get', async (req: Request, res: Response) => {
   try {
     const { app_id: appId } = req.body ?? {}
+    console.log('/get', req.body)
     const hasAppId = appId != null && String(appId).trim() !== ''
 
     const sql = hasAppId
@@ -66,7 +70,7 @@ router.post('/get', async (req: Request, res: Response) => {
       app_id: r.app_id,
       app_name: r.app_name
     }))
-
+    console.log('/get products', products)
     return res.status(200).json({ code: 0, message: 'Success', products })
   } catch (err) {
     console.error('POST /api/products/get error:', err)

@@ -40,7 +40,9 @@ router.post('/upload', async (req: Request, res: Response) => {
     const send = (code: number, message: string) => res.status(200).json({ code, message })
     try {
         const body = req.body ?? {}
+        console.log('/upload', body)
         const missingBody = REQUIRED_BODY_KEYS.find((key) => !body[key])
+        console.log('/upload missingBody', missingBody)
         if (missingBody) {
             return send(1, '参数缺失')
         }
@@ -48,6 +50,7 @@ router.post('/upload', async (req: Request, res: Response) => {
 
         const [rows] = await pool.execute<unknown[]>('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])
         const app_product = rows?.[0] as AppProductRow | undefined
+        console.log('/upload app_product', app_product)
         if (!app_product) {
             return send(1, 'app_product 不存在')
         }
@@ -89,6 +92,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             new_receipt,
             receipt,
         }
+        console.log('/upload inventoryRow', inventoryRow)
         const cols = Object.keys(inventoryRow).join(', ')
         const placeholders = Object.keys(inventoryRow).map(() => '?').join(', ')
         await pool.execute(
@@ -96,6 +100,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             Object.values(inventoryRow)
         )
 
+        console.log('/upload success')
         return send(0, '上传成功')
     } catch (err) {
         console.error('POST /api/receipts/upload error:', err)
