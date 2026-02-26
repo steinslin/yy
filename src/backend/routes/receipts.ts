@@ -172,6 +172,7 @@ router.post('/get', async (req: Request, res: Response) => {
     const sendOk = (data: Record<string, unknown>) => res.status(200).json({ code: 0, data })
     try {
         const body = req.body ?? {}
+        console.log('/get body', body)
         const { app_id, product_id } = body
         if (!app_id || !product_id) {
             return sendErr(1, '缺少 app_id 或 product_id')
@@ -187,9 +188,11 @@ router.post('/get', async (req: Request, res: Response) => {
             const row = (Array.isArray(rows) ? rows[0] : undefined) as InventoryRow | undefined
             if (!row) {
                 await conn.rollback()
+                console.log('/get no available receipt')
                 return sendErr(400, '暂无可用凭证，请先在入库完成购买并上传凭证')
             }
 
+            console.log('/get update status to 1')
             await conn.execute('UPDATE inventory SET status = 1, out_time = NOW() WHERE id = ?', [row.id])
             await conn.commit()
 
@@ -197,7 +200,13 @@ router.post('/get', async (req: Request, res: Response) => {
                 ? row.created_at
                 : new Date(row.created_at as string)
             const createdAtStr = createdAt.toISOString().slice(0, 19).replace('T', ' ')
-
+            console.log('/get sendOk', {
+                receipt_id: String(row.id),
+                transaction_id: row.transaction_id ?? '',
+                created_at: createdAtStr,
+                new_receipt: row.new_receipt ?? '',
+                receipt: row.receipt ?? '',
+            })
             return sendOk({
                 receipt_id: String(row.id),
                 transaction_id: row.transaction_id ?? '',
@@ -228,6 +237,7 @@ router.post('/invalid', async (req: Request, res: Response) => {
     const sendOk = () => res.status(200).json({ code: 0 })
     try {
         const body = req.body ?? {}
+        console.log('/invalid body', body)
         const { id, err_code = '', err_msg = '' } = body
         if (!id) {
             return sendErr(1, '缺少 id')
@@ -243,8 +253,11 @@ router.post('/invalid', async (req: Request, res: Response) => {
         )
         const affectedRows = (result as { affectedRows?: number }).affectedRows ?? 0
         if (affectedRows === 0) {
+            console.log('/invalid record not found')
             return sendErr(404, '记录不存在')
         }
+        console.log('/invalid update status to 2')
+        console.log('/invalid sendOk')
         return sendOk()
     } catch (err) {
         console.error('POST /api/receipts/invalid error:', err)
@@ -266,6 +279,7 @@ router.post('/consume', async (req: Request, res: Response) => {
     const sendOk = () => res.status(200).json({ code: 0 })
     try {
         const body = req.body ?? {}
+        console.log('/consume body', body)
         const { id } = body
         if (!id) {
             return sendErr(1, '缺少 id')
@@ -274,14 +288,17 @@ router.post('/consume', async (req: Request, res: Response) => {
         if (!Number.isInteger(inventoryId) || inventoryId < 1) {
             return sendErr(1, 'id 无效')
         }
+        console.log('/consume update status to 3')
         const [result] = await pool.execute(
             'UPDATE inventory SET status = 3 WHERE id = ?',
             [inventoryId]
         )
         const affectedRows = (result as { affectedRows?: number }).affectedRows ?? 0
         if (affectedRows === 0) {
+            console.log('/consume record not found')
             return sendErr(404, '记录不存在')
         }
+        console.log('/consume sendOk')
         return sendOk()
     } catch (err) {
         console.error('POST /api/receipts/consume error:', err)
