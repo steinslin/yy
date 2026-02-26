@@ -87,7 +87,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             in_device: '',
             out_device: '',
             type: 'upload',
-            transaction_date,
+            transaction_date: transaction_date ? new Date(transaction_date) : now,
             transaction_id,
             new_receipt,
             receipt,
