@@ -21,9 +21,7 @@ const corsOptions: cors.CorsOptions = {
   credentials: true
 }
 app.use(cors(corsOptions))
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-// 增加请求体大小限制以支持文件上传
+// 只注册一次，避免重复解析导致 req.body 被覆盖为空
 app.use(bodyParser.json({ limit: '10mb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }))
 
