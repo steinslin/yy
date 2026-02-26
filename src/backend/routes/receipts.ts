@@ -76,6 +76,16 @@ router.post('/upload', async (req: Request, res: Response) => {
         const tier_code = app_product.product_id ?? ''
         const currency_code = 'CNY' // TODO
 
+        // 去重：同 app_id + product_id(tier_code) + transaction_id 视为同一笔，不重复插入
+        const [existing] = await pool.execute<unknown[]>(
+            'SELECT id FROM inventory WHERE app_id = ? AND tier_code = ? AND transaction_id = ? LIMIT 1',
+            [app_id, tier_code, transaction_id]
+        )
+        if (Array.isArray(existing) && existing.length > 0) {
+            console.log('/upload duplicate skipped', { app_id, product_id, transaction_id })
+            return send(1, '凭证已存在，不重复插入')
+        }
+
         const now = new Date()
         const inventoryRow = {
             game_name,

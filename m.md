@@ -332,6 +332,6 @@
 | device_system | 系统版本 |
 | device_vendor_id | identifierForVendor |
 
-curl -X POST "http://192.168.8.158:3000/api/receipts/get" ^
-  -H "Content-Type: application/json" ^
+curl -X POST "http://192.168.8.158:3000/api/receipts/get" \
+  -H "Content-Type: application/json" \
   -d "{\"app_id\": \"com.lastwar.ios\", \"product_id\": \"prodios_1\"}"
