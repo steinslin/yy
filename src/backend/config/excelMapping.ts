@@ -64,11 +64,10 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     transform: (value: any) => {
       if (typeof value === 'string') {
         const statusMap: Record<string, number> = {
-          待入库: 0,
-          已入库: 1,
-          已出库: 2,
-          已使用: 3,
-          已取消: 4
+          待出库: 0,
+          出库中: 1,
+          出库失败: 2,
+          出库成功: 3
         }
         return statusMap[value] ?? 0
       }

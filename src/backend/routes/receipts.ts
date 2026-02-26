@@ -14,6 +14,17 @@ interface AppProductRow {
     quantity: number
 }
 
+/** inventory 表出库查询行类型（receipts/get 用） */
+interface InventoryRow {
+    id: number
+    app_id: string
+    tier_code: string
+    transaction_id: string | null
+    created_at: Date
+    new_receipt: string | null
+    receipt: string | null
+}
+
 const REQUIRED_BODY_KEYS = ['app_id', 'product_id', 'transaction_date', 'transaction_id', 'new_receipt'] as const
 const REQUIRED_APP_PRODUCT_FIELDS: { key: keyof AppProductRow; label: string }[] = [
     { key: 'app_name', label: 'app_name' },
@@ -74,7 +85,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             tier_code,
             currency_code,
             inventory_no: crypto.randomUUID(),
-            status: 1,
+            status: 0,
             created_at: now,
             in_account: 'system',
             in_time: now,
@@ -105,6 +116,176 @@ router.post('/upload', async (req: Request, res: Response) => {
     } catch (err) {
         console.error('POST /api/receipts/upload error:', err)
         return send(1, (err as Error).message || '上传失败')
+    }
+})
+
+/**
+ * ### 1. POST `/api/receipts/get`
+
+读取inventory表获取一条状态为待出库(0)的凭证，取走后将状态标记为出库中(1)
+
+**请求体字段**：
+
+| 字段 | 含义 | 必传 |
+|------|------|------|
+| **app_id** | 应用包名（同 products 的 app_id） | 是 |
+| **product_id** | 内购商品 ID，用于匹配凭证 | 是 |
+| **name** | 商品展示名，仅辅助 | 否 |
+
+**请求体示例**：
+```json
+{
+  "app_id": "com.lastwar.ios",
+  "product_id": "prodios_1",
+  "name": "Hot Package1"
+}
+```
+
+**返回体字段（成功时 data 内）**：
+
+| 字段 | 含义 |
+|------|------|
+| **receipt_id** | 凭证记录 ID（同条凭证上报 invalid/consume 时传此 id） |
+| **transaction_id** | 交易号（如苹果 transactionIdentifier） |
+| **created_at** | 交易时间，格式 `yyyy-MM-dd HH:mm:ss` |
+| **new_receipt** | 新凭证 Base64 字符串，不可为 null |
+| **receipt** | 旧凭证 Base64 字符串 |
+
+**返回体示例（成功）**：
+```json
+{
+  "code": 0,
+  "data": {
+    "receipt_id": "1",
+    "transaction_id": "470003053702685",
+    "created_at": "2026-02-11 17:30:26",
+    "new_receipt": "MIIUKQYJKoZIhvcNAQcCoIIU...",
+    "receipt": "ewoJInNpZ25hdHVyZSIgPSAiQkVJ..."
+  }
+}
+```
+
+**返回体（无可用凭证）**：`{ "code": 400, "message": "暂无可用凭证，请先在入库完成购买并上传凭证" }`（HTTP 状态码仍为 200）
+ */
+router.post('/get', async (req: Request, res: Response) => {
+    const sendErr = (code: number, message: string) => res.status(200).json({ code, message })
+    const sendOk = (data: Record<string, unknown>) => res.status(200).json({ code: 0, data })
+    try {
+        const body = req.body ?? {}
+        const { app_id, product_id } = body
+        if (!app_id || !product_id) {
+            return sendErr(1, '缺少 app_id 或 product_id')
+        }
+
+        const conn = await pool.getConnection()
+        try {
+            await conn.beginTransaction()
+            const [rows] = await conn.execute(
+                'SELECT id, app_id, tier_code, transaction_id, created_at, new_receipt, receipt FROM inventory WHERE app_id = ? AND tier_code = ? AND status = 0 ORDER BY id ASC LIMIT 1 FOR UPDATE',
+                [app_id, product_id]
+            )
+            const row = (Array.isArray(rows) ? rows[0] : undefined) as InventoryRow | undefined
+            if (!row) {
+                await conn.rollback()
+                return sendErr(400, '暂无可用凭证，请先在入库完成购买并上传凭证')
+            }
+
+            await conn.execute('UPDATE inventory SET status = 1, out_time = NOW() WHERE id = ?', [row.id])
+            await conn.commit()
+
+            const createdAt = row.created_at instanceof Date
+                ? row.created_at
+                : new Date(row.created_at as string)
+            const createdAtStr = createdAt.toISOString().slice(0, 19).replace('T', ' ')
+
+            return sendOk({
+                receipt_id: String(row.id),
+                transaction_id: row.transaction_id ?? '',
+                created_at: createdAtStr,
+                new_receipt: row.new_receipt ?? '',
+                receipt: row.receipt ?? '',
+            })
+        } finally {
+            conn.release()
+        }
+    } catch (err) {
+        console.error('POST /api/receipts/get error:', err)
+        return sendErr(1, (err as Error).message || '获取失败')
+    }
+})
+
+/**
+ * ### 2. POST `/api/receipts/invalid`
+ *
+ * 更新 inventory 表凭证状态 status 为出库失败(2)，并设置 remark 为 err_code+err_msg。
+ *
+ * **请求体**：id（凭证记录 ID）、err_code、err_msg 必传；token 可选。
+ * **返回体（成功）**：`{ "code": 0 }`
+ */
+router.post('/invalid', async (req: Request, res: Response) => {
+    const sendErr = (code: number, message?: string) =>
+        res.status(200).json(message != null ? { code, message } : { code })
+    const sendOk = () => res.status(200).json({ code: 0 })
+    try {
+        const body = req.body ?? {}
+        const { id, err_code = '', err_msg = '' } = body
+        if (!id) {
+            return sendErr(1, '缺少 id')
+        }
+        const inventoryId = Number(id)
+        if (!Number.isInteger(inventoryId) || inventoryId < 1) {
+            return sendErr(1, 'id 无效')
+        }
+        const remark = `${String(err_code).trim()}: ${String(err_msg).trim()}`
+        const [result] = await pool.execute(
+            'UPDATE inventory SET status = 2, remark = ? WHERE id = ?',
+            [remark, inventoryId]
+        )
+        const affectedRows = (result as { affectedRows?: number }).affectedRows ?? 0
+        if (affectedRows === 0) {
+            return sendErr(404, '记录不存在')
+        }
+        return sendOk()
+    } catch (err) {
+        console.error('POST /api/receipts/invalid error:', err)
+        return sendErr(1, (err as Error).message || '更新失败')
+    }
+})
+
+/**
+ * ### 3. POST `/api/receipts/consume`
+ *
+ * 更新 inventory 表凭证状态为出库成功(3)。
+ *
+ * **请求体**：id（凭证记录 ID）必传；token 可选。
+ * **返回体（成功）**：`{ "code": 0 }`
+ */
+router.post('/consume', async (req: Request, res: Response) => {
+    const sendErr = (code: number, message?: string) =>
+        res.status(200).json(message != null ? { code, message } : { code })
+    const sendOk = () => res.status(200).json({ code: 0 })
+    try {
+        const body = req.body ?? {}
+        const { id } = body
+        if (!id) {
+            return sendErr(1, '缺少 id')
+        }
+        const inventoryId = Number(id)
+        if (!Number.isInteger(inventoryId) || inventoryId < 1) {
+            return sendErr(1, 'id 无效')
+        }
+        const [result] = await pool.execute(
+            'UPDATE inventory SET status = 3 WHERE id = ?',
+            [inventoryId]
+        )
+        const affectedRows = (result as { affectedRows?: number }).affectedRows ?? 0
+        if (affectedRows === 0) {
+            return sendErr(404, '记录不存在')
+        }
+        return sendOk()
+    } catch (err) {
+        console.error('POST /api/receipts/consume error:', err)
+        return sendErr(1, (err as Error).message || '更新失败')
     }
 })
 

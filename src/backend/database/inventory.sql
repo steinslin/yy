@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS inventory (
   tier_code VARCHAR(50) NOT NULL COMMENT '档位编码',
   currency_code VARCHAR(10) NOT NULL DEFAULT 'CNY' COMMENT '货币代码',
   inventory_no VARCHAR(100) NOT NULL UNIQUE COMMENT '库存单号',
-  status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-待入库，1-已入库，2-已出库，3-已使用，4-已取消',
+  status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-待出库，1-出库中，2-出库失败，3-出库成功',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   in_account VARCHAR(100) COMMENT '入库账户',
   in_time TIMESTAMP NULL COMMENT '入库时间',

@@ -140,11 +140,10 @@ const Home = () => {
       width: 100,
       render: (status: number) => {
         const statusConfig: Record<number, { text: string; color: string }> = {
-          0: { text: '待入库', color: 'default' },
-          1: { text: '已入库', color: 'processing' },
-          2: { text: '已出库', color: 'warning' },
-          3: { text: '已使用', color: 'success' },
-          4: { text: '已取消', color: 'error' }
+          0: { text: '待出库', color: 'default' },
+          1: { text: '出库中', color: 'processing' },
+          2: { text: '出库失败', color: 'error' },
+          3: { text: '出库成功', color: 'success' }
         }
         const config = statusConfig[status] ?? { text: '未知', color: 'default' }
         return <Tag color={config.color}>{config.text}</Tag>
@@ -515,11 +514,10 @@ const Home = () => {
 
       // 状态映射
       const statusMap: Record<number, string> = {
-        0: '待入库',
-        1: '已入库',
-        2: '已出库',
-        3: '已使用',
-        4: '已取消'
+        0: '待出库',
+        1: '出库中',
+        2: '出库失败',
+        3: '出库成功'
       }
 
       // 转换为 CSV 格式
@@ -742,11 +740,10 @@ const Home = () => {
                       style={{ width: 288 }}
                       allowClear
                     >
-                      <Select.Option value={0}>待入库</Select.Option>
-                      <Select.Option value={1}>已入库</Select.Option>
-                      <Select.Option value={2}>已出库</Select.Option>
-                      <Select.Option value={3}>已使用</Select.Option>
-                      <Select.Option value={4}>已取消</Select.Option>
+                      <Select.Option value={0}>待出库</Select.Option>
+                      <Select.Option value={1}>出库中</Select.Option>
+                      <Select.Option value={2}>出库失败</Select.Option>
+                      <Select.Option value={3}>出库成功</Select.Option>
                     </Select>
                   </div>
                 </div>
@@ -893,11 +890,10 @@ const Home = () => {
             <Descriptions.Item label="状态">
               {(() => {
                 const statusMap: Record<number, string> = {
-                  0: '待入库',
-                  1: '已入库',
-                  2: '已出库',
-                  3: '已使用',
-                  4: '已取消'
+                  0: '待出库',
+                  1: '出库中',
+                  2: '出库失败',
+                  3: '出库成功'
                 }
                 return statusMap[detailRecord.status] ?? '未知'
               })()}
