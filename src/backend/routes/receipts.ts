@@ -33,10 +33,22 @@ router.post('/upload', async (req: Request, res: Response) => {
         if (!app_product) {
             return res.status(200).json({ code: 1, message: 'app_product 不存在' })
         }
-        const game_name = app_product.app_name
-        const tier_name = app_product.product_name
-        const tier_price = app_product.price
-        const tier_code = app_product.product_id
+        if (!app_product.app_name) {
+            return res.status(200).json({ code: 1, message: 'app_product 不全，缺少 app_name' })
+        }
+        if (!app_product.product_name) {
+            return res.status(200).json({ code: 1, message: 'app_product 不全，缺少 product_name' })
+        }
+        if (!app_product.price) {
+            return res.status(200).json({ code: 1, message: 'app_product 不全，缺少 price' })
+        }
+        if (!app_product.product_id) {
+            return res.status(200).json({ code: 1, message: 'app_product 不全，缺少 product_id' })
+        }
+        const game_name = app_product.app_name || ''
+        const tier_name = app_product.product_name || ''
+        const tier_price = app_product.price || 0
+        const tier_code = app_product.product_id || ''
         const currency_code = 'CNY' // TODO
 
         // 将结果存入inventory表
