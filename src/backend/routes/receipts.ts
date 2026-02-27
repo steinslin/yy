@@ -158,8 +158,8 @@ router.post('/upload', async (req: Request, res: Response) => {
 | **receipt_id** | 凭证记录 ID（同条凭证上报 invalid/consume 时传此 id） |
 | **transaction_id** | 交易号（如苹果 transactionIdentifier） |
 | **created_at** | 交易时间，格式 `yyyy-MM-dd HH:mm:ss` |
-| **new_receipt** | 新凭证 Base64 字符串，不可为 null |
-| **receipt** | 旧凭证 Base64 字符串 |
+| **new_receipt** | 客户端凭证，不可为 null |
+| **receipt** | 临时客户端凭证，不可为 null |
 
 **返回体示例（成功）**：
 ```json
