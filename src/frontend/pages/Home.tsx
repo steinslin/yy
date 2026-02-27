@@ -14,6 +14,8 @@ import {
   Modal,
   Descriptions,
   Tag,
+  Tooltip,
+  Typography,
   Upload,
   type UploadFile
 } from 'antd'
@@ -97,7 +99,7 @@ const Home = () => {
       title: '应用ID',
       dataIndex: 'app_id',
       key: 'app_id',
-      width: 120
+      width: 220
     },
     {
       title: '档位名称',
@@ -225,6 +227,44 @@ const Home = () => {
       dataIndex: 'type',
       key: 'type',
       width: 100
+    },
+    {
+      title: '客户端凭证',
+      dataIndex: 'new_receipt',
+      key: 'new_receipt',
+      width: 140,
+      ellipsis: true,
+      render: (val: string) => {
+        if (val == null || val === '') return '-'
+        const str = String(val)
+        const short = str.length > 24 ? `${str.slice(0, 24)}...` : str
+        return (
+          <Tooltip title={<span style={{ wordBreak: 'break-all' }}>{str}</span>}>
+            <Typography.Text copyable={{ text: str }} style={{ cursor: 'pointer' }}>
+              {short}
+            </Typography.Text>
+          </Tooltip>
+        )
+      }
+    },
+    {
+      title: '临时客户端凭证',
+      dataIndex: 'receipt',
+      key: 'receipt',
+      width: 140,
+      ellipsis: true,
+      render: (val: string) => {
+        if (val == null || val === '') return '-'
+        const str = String(val)
+        const short = str.length > 24 ? `${str.slice(0, 24)}...` : str
+        return (
+          <Tooltip title={<span style={{ wordBreak: 'break-all' }}>{str}</span>}>
+            <Typography.Text copyable={{ text: str }} style={{ cursor: 'pointer' }}>
+              {short}
+            </Typography.Text>
+          </Tooltip>
+        )
+      }
     },
     {
       title: '操作',
@@ -931,6 +971,24 @@ const Home = () => {
             <Descriptions.Item label="出库设备">{detailRecord.out_device ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="备注" span={2}>
               {detailRecord.remark ?? '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="客户端凭证" span={2}>
+              {detailRecord.new_receipt != null && detailRecord.new_receipt !== '' ? (
+                <Typography.Text copyable style={{ wordBreak: 'break-all', display: 'block', maxHeight: 120, overflow: 'auto' }}>
+                  {detailRecord.new_receipt}
+                </Typography.Text>
+              ) : (
+                '-'
+              )}
+            </Descriptions.Item>
+            <Descriptions.Item label="临时客户端凭证" span={2}>
+              {detailRecord.receipt != null && detailRecord.receipt !== '' ? (
+                <Typography.Text copyable style={{ wordBreak: 'break-all', display: 'block', maxHeight: 120, overflow: 'auto' }}>
+                  {detailRecord.receipt}
+                </Typography.Text>
+              ) : (
+                '-'
+              )}
             </Descriptions.Item>
           </Descriptions>
         )}

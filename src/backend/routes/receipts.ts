@@ -14,15 +14,15 @@ interface AppProductRow {
     quantity: number
 }
 
-/** inventory 表出库查询行类型（receipts/get 用） */
+/** inventory 表出库查询行类型（receipts/get 用），new_receipt/receipt 为 NOT NULL */
 interface InventoryRow {
     id: number
     app_id: string
     tier_code: string
     transaction_id: string | null
     created_at: Date
-    new_receipt: string | null
-    receipt: string | null
+    new_receipt: string
+    receipt: string
 }
 
 const REQUIRED_BODY_KEYS = ['app_id', 'product_id', 'transaction_date', 'transaction_id', 'new_receipt'] as const
@@ -58,6 +58,12 @@ router.post('/upload', async (req: Request, res: Response) => {
             return send(1, '参数缺失')
         }
         const { app_id, product_id, transaction_date, transaction_id, new_receipt, receipt } = body
+        if (new_receipt == null || String(new_receipt).trim() === '') {
+            return send(1, 'new_receipt 不能为空')
+        }
+        if (receipt == null || String(receipt).trim() === '') {
+            return send(1, 'receipt 不能为空')
+        }
 
         const [rows] = await pool.execute<unknown[]>('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])
         const app_product = rows?.[0] as AppProductRow | undefined
@@ -110,8 +116,8 @@ router.post('/upload', async (req: Request, res: Response) => {
             type: 'upload',
             transaction_date: transaction_date ? new Date(transaction_date) : now,
             transaction_id,
-            new_receipt,
-            receipt,
+            new_receipt: String(new_receipt).trim(),
+            receipt: String(receipt).trim(),
         }
         console.log('/upload inventoryRow', inventoryRow)
         const cols = Object.keys(inventoryRow).join(', ')
@@ -214,15 +220,15 @@ router.post('/get', async (req: Request, res: Response) => {
                 receipt_id: String(row.id),
                 transaction_id: row.transaction_id ?? '',
                 created_at: createdAtStr,
-                new_receipt: row.new_receipt ?? '',
-                receipt: row.receipt ?? '',
+                new_receipt: row.new_receipt,
+                receipt: row.receipt,
             })
             return sendOk({
                 receipt_id: String(row.id),
                 transaction_id: row.transaction_id ?? '',
                 created_at: createdAtStr,
-                new_receipt: row.new_receipt ?? '',
-                receipt: row.receipt ?? '',
+                new_receipt: row.new_receipt,
+                receipt: row.receipt,
             })
         } finally {
             conn.release()

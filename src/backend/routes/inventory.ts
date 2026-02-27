@@ -282,6 +282,16 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
         continue
       }
 
+      // new_receipt、receipt 不能为空，否则不导入该行
+      const newReceiptVal = record.new_receipt != null ? String(record.new_receipt).trim() : ''
+      const receiptVal = record.receipt != null ? String(record.receipt).trim() : ''
+      if (newReceiptVal === '' || receiptVal === '') {
+        errors.push(`第 ${rowNum} 行 new_receipt 或 receipt 为空，已跳过`)
+        continue
+      }
+      record.new_receipt = newReceiptVal
+      record.receipt = receiptVal
+
       // 生成库存单号（如果为空）
       if (!record.inventory_no || String(record.inventory_no).trim() === '') {
         record.inventory_no = `INV-${Date.now()}-${i}`

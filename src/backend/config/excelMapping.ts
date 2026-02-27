@@ -132,6 +132,14 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
   {
     excelColumn: '类型',
     dbField: 'type'
+  },
+  {
+    excelColumn: '客户端凭证',
+    dbField: 'new_receipt'
+  },
+  {
+    excelColumn: '临时客户端凭证',
+    dbField: 'receipt'
   }
 ]
 
