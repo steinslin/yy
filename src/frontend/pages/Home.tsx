@@ -133,7 +133,18 @@ const Home = () => {
       title: '库存单号',
       dataIndex: 'inventory_no',
       key: 'inventory_no',
-      width: 150
+      width: 150,
+      ellipsis: true,
+      render: (val: string) => {
+        if (val == null || val === '') return '-'
+        const str = String(val)
+        const short = str.length > 20 ? `${str.slice(0, 20)}...` : str
+        return (
+          <Tooltip title={str}>
+            <span>{short}</span>
+          </Tooltip>
+        )
+      }
     },
     {
       title: '状态',
