@@ -112,7 +112,7 @@
 .search-form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 12px;
 }
 
 .search-form-item {

@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import DeviceManage from './pages/DeviceManage'
 import DeviceGroupManage from './pages/DeviceGroupManage'
+import GameTierManage from './pages/GameTierManage'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -44,6 +45,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DeviceGroupManage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/game-tiers"
+          element={
+            <ProtectedRoute>
+              <GameTierManage />
             </ProtectedRoute>
           }
         />

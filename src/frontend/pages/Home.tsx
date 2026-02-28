@@ -312,7 +312,8 @@ const Home = () => {
     {
       key: '5',
       icon: <PlayCircleOutlined />,
-      label: '游戏档位管理'
+      label: '游戏档位管理',
+      onClick: () => navigate('/game-tiers')
     },
     {
       key: '6',
