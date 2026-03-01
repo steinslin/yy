@@ -289,17 +289,17 @@ const GameTierManage = () => {
       width: 170,
       render: (t: string) => (t ? new Date(t).toLocaleString('zh-CN') : '-')
     },
-    {
-      title: '操作',
-      key: 'action',
-      width: 140,
-      fixed: 'right',
-      render: (_, record) => (
-        <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openAdd({ app_id: record.app_id, app_name: record.app_name })}>
-          新增档位
-        </Button>
-      )
-    }
+    // {
+    //   title: '操作',
+    //   key: 'action',
+    //   width: 140,
+    //   fixed: 'right',
+    //   render: (_, record) => (
+    //     <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openAdd({ app_id: record.app_id, app_name: record.app_name })}>
+    //       新增档位
+    //     </Button>
+    //   )
+    // }
   ]
 
   return (

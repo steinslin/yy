@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS inventory (
   out_time TIMESTAMP NULL COMMENT '出库时间',
   used_time TIMESTAMP NULL COMMENT '使用时间',
   remark TEXT COMMENT '备注',
-  in_trace_id VARCHAR(100) COMMENT '入库TRACE ID',
-  out_trace_id VARCHAR(100) COMMENT '出库TRACE ID',
   in_device VARCHAR(200) COMMENT '入库设备',
   out_device VARCHAR(200) COMMENT '出库设备',
   type VARCHAR(50) COMMENT '类型',

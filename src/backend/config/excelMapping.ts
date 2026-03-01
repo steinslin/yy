@@ -114,14 +114,6 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     dbField: 'remark'
   },
   {
-    excelColumn: '入库TRACE ID',
-    dbField: 'in_trace_id'
-  },
-  {
-    excelColumn: '出库TRACE ID',
-    dbField: 'out_trace_id'
-  },
-  {
     excelColumn: '入库设备',
     dbField: 'in_device'
   },

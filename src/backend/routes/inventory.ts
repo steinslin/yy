@@ -363,4 +363,44 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
   }
 })
 
+// 批量更新凭证状态（用于导出后设为出库成功），同步更新出库时间、出库账户、备注
+router.patch('/batch-status', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { ids, status } = req.body as { ids?: number[]; status?: number }
+    if (!Array.isArray(ids) || ids.length === 0 || status === undefined || status === null) {
+      return res.status(400).json({
+        success: false,
+        message: '请提供 ids 数组和 status'
+      })
+    }
+    const safeStatus = Number(status)
+    if (!Number.isInteger(safeStatus) || safeStatus < 0 || safeStatus > 3) {
+      return res.status(400).json({
+        success: false,
+        message: 'status 必须为 0-3 的整数'
+      })
+    }
+    const currentUser = (req as any).user
+    const outAccount = currentUser?.username ?? 'system'
+    const remark = '批量导出'
+    const placeholders = ids.map(() => '?').join(', ')
+    const sql = `UPDATE inventory SET status = ?, out_time = NOW(), out_account = ?, remark = ? WHERE id IN (${placeholders})`
+    const [result] = (await pool.execute(sql, [safeStatus, outAccount, remark, ...ids])) as unknown as [
+      { affectedRows: number }
+    ]
+    const affectedRows = (result as any)?.affectedRows ?? 0
+    res.json({
+      success: true,
+      data: { updated: affectedRows },
+      message: `已更新 ${affectedRows} 条凭证状态`
+    })
+  } catch (error: any) {
+    console.error('批量更新状态失败:', error)
+    res.status(500).json({
+      success: false,
+      message: error.message ?? '批量更新状态失败'
+    })
+  }
+})
+
 export default router

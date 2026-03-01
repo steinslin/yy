@@ -17,6 +17,7 @@ import {
   Tooltip,
   Typography,
   Upload,
+  Checkbox,
   type UploadFile
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -86,6 +87,10 @@ const Home = () => {
 
   // 选中的行（跨分页保留）
   const [selectedRows, setSelectedRows] = useState<Map<number, any>>(new Map())
+
+  // 批量导出确认弹窗
+  const [exportConfirmVisible, setExportConfirmVisible] = useState(false)
+  const [exportSetOutbound, setExportSetOutbound] = useState(false)
 
   // 表格列定义
   const columns: ColumnsType<any> = [
@@ -208,18 +213,6 @@ const Home = () => {
       key: 'remark',
       width: 150,
       ellipsis: true
-    },
-    {
-      title: '入库TRACE ID',
-      dataIndex: 'in_trace_id',
-      key: 'in_trace_id',
-      width: 150
-    },
-    {
-      title: '出库TRACE ID',
-      dataIndex: 'out_trace_id',
-      key: 'out_trace_id',
-      width: 150
     },
     {
       title: '入库设备',
@@ -467,8 +460,8 @@ const Home = () => {
     setSelectedRows(updatedMap)
   }
 
-  // 批量导出
-  const handleBatchExport = async () => {
+  // 批量导出（setOutbound: 导出是否将凭证状态设为出库成功）
+  const handleBatchExport = async (setOutbound: boolean) => {
     try {
       let dataToExport: any[] = []
 
@@ -539,6 +532,22 @@ const Home = () => {
         dataToExport = Array.from(selectedRows.values())
       }
 
+      // 若用户选择导出后设为出库状态，则批量更新状态为 3（出库成功）
+      if (setOutbound && dataToExport.length > 0) {
+        const ids = dataToExport.map((row: any) => row.id).filter((id: any) => id != null)
+        if (ids.length > 0) {
+          try {
+            await api.patch('/inventory/batch-status', { ids, status: 3 })
+            message.success(`已将 ${ids.length} 条凭证状态更新为出库成功`)
+            fetchInventoryData(pagination.current, pagination.pageSize)
+          } catch (err: any) {
+            console.error('批量更新状态失败:', err)
+            message.error(err.response?.data?.message ?? '更新凭证状态失败，请稍后重试')
+            return
+          }
+        }
+      }
+
       // 定义 CSV 表头
       const headers = [
         'ID',
@@ -557,8 +566,6 @@ const Home = () => {
         '出库时间',
         '使用时间',
         '备注',
-        '入库TRACE ID',
-        '出库TRACE ID',
         '入库设备',
         '出库设备',
         '类型'
@@ -593,8 +600,6 @@ const Home = () => {
             row.out_time ? new Date(row.out_time).toLocaleString('zh-CN') : '',
             row.used_time ? new Date(row.used_time).toLocaleString('zh-CN') : '',
             `"${(row.remark ?? '').replace(/"/g, '""')}"`,
-            `"${(row.in_trace_id ?? '').replace(/"/g, '""')}"`,
-            `"${(row.out_trace_id ?? '').replace(/"/g, '""')}"`,
             `"${(row.in_device ?? '').replace(/"/g, '""')}"`,
             `"${(row.out_device ?? '').replace(/"/g, '""')}"`,
             `"${(row.type ?? '').replace(/"/g, '""')}"`
@@ -618,7 +623,16 @@ const Home = () => {
     } catch (error) {
       console.error('导出失败:', error)
       message.error('导出失败，请稍后重试')
+    } finally {
+      setExportConfirmVisible(false)
+      setExportSetOutbound(false)
     }
+  }
+
+  // 打开批量导出确认弹窗
+  const handleBatchExportClick = () => {
+    setExportSetOutbound(false)
+    setExportConfirmVisible(true)
   }
 
   // 批量导入
@@ -864,7 +878,7 @@ const Home = () => {
                     <Button
                       type="primary"
                       icon={<DownloadOutlined />}
-                      onClick={handleBatchExport}
+                      onClick={handleBatchExportClick}
                       style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
                     >
                       批量导出 {selectedRows.size > 0 ? `(${selectedRows.size})` : '(全部)'}
@@ -911,6 +925,31 @@ const Home = () => {
           </div>
         </Content>
       </Layout>
+
+      {/* 批量导出确认弹窗 */}
+      <Modal
+        title="确认批量导出"
+        open={exportConfirmVisible}
+        onCancel={() => {
+          setExportConfirmVisible(false)
+          setExportSetOutbound(false)
+        }}
+        onOk={async () => {
+          await handleBatchExport(exportSetOutbound)
+        }}
+        okText="确认导出"
+        cancelText="取消"
+      >
+        <p style={{ marginBottom: 12 }}>
+          即将导出 {selectedRows.size > 0 ? selectedRows.size : '全部'} 条数据，是否继续？
+        </p>
+        <Checkbox
+          checked={exportSetOutbound}
+          onChange={e => setExportSetOutbound(e.target.checked)}
+        >
+          导出后将凭证状态设置为出库成功
+        </Checkbox>
+      </Modal>
 
       {/* 详情弹窗 */}
       <Modal
@@ -972,12 +1011,6 @@ const Home = () => {
               {detailRecord.used_time
                 ? new Date(detailRecord.used_time).toLocaleString('zh-CN')
                 : '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="入库TRACE ID" span={2}>
-              {detailRecord.in_trace_id ?? '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="出库TRACE ID" span={2}>
-              {detailRecord.out_trace_id ?? '-'}
             </Descriptions.Item>
             <Descriptions.Item label="入库设备">{detailRecord.in_device ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="出库设备">{detailRecord.out_device ?? '-'}</Descriptions.Item>

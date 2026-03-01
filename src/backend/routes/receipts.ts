@@ -109,8 +109,6 @@ router.post('/upload', async (req: Request, res: Response) => {
             out_time: now,
             used_time: now,
             remark: null as string | null,
-            in_trace_id: '',
-            out_trace_id: '',
             in_device: '',
             out_device: '',
             type: 'upload',
