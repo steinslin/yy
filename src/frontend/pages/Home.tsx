@@ -858,9 +858,9 @@ const Home = () => {
                     />
                   </div>
                   <div className="search-form-item">
-                    <label className="search-label">库存ID</label>
+                    <label className="search-label">库存单号</label>
                     <Input
-                      placeholder="请输入库存ID"
+                      placeholder="请输入库存单号"
                       value={searchForm.inventoryNo}
                       onChange={e => {
                         setSearchForm({ ...searchForm, inventoryNo: e.target.value })
