@@ -961,7 +961,7 @@ const Home = () => {
         cancelText="取消"
       >
         <p style={{ marginBottom: 12 }}>
-          即将导出 {selectedRows.size > 0 ? selectedRows.size : '全部'} 条数据，是否继续？
+          即将导出 {selectedRows.size > 0 ? selectedRows.size : pagination.total} 条数据，是否继续？
         </p>
         <Checkbox
           checked={exportSetOutbound}
