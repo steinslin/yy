@@ -97,8 +97,8 @@ const Home = () => {
   const columns: ColumnsType<any> = [
     {
       title: '游戏名称',
-      dataIndex: 'game_name',
-      key: 'game_name',
+      dataIndex: 'app_name',
+      key: 'app_name',
       width: 120
     },
     {
@@ -366,7 +366,7 @@ const Home = () => {
       }
 
       if (searchForm.gameName) {
-        params.game_name = searchForm.gameName
+        params.app_name = searchForm.gameName
       }
       if (searchForm.appId) {
         params.app_id = searchForm.appId
@@ -483,7 +483,7 @@ const Home = () => {
           }
 
           if (searchForm.gameName) {
-            params.game_name = searchForm.gameName
+            params.app_name = searchForm.gameName
           }
           if (searchForm.appId) {
             params.app_id = searchForm.appId
@@ -592,7 +592,7 @@ const Home = () => {
         ...dataToExport.map((row: any) => {
           return [
             row.id ?? '',
-            `"${(row.game_name ?? '').replace(/"/g, '""')}"`,
+            `"${(row.app_name ?? '').replace(/"/g, '""')}"`,
             `"${(row.app_id ?? '').replace(/"/g, '""')}"`,
             `"${(row.tier_name ?? '').replace(/"/g, '""')}"`,
             row.tier_price ?? '',
@@ -973,7 +973,7 @@ const Home = () => {
       >
         {detailRecord && (
           <Descriptions column={2} bordered>
-            <Descriptions.Item label="游戏名称">{detailRecord.game_name ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="游戏名称">{detailRecord.app_name ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="应用ID">{detailRecord.app_id ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="档位名称">{detailRecord.tier_name ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="档位价格">

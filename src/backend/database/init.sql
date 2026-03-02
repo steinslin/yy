@@ -24,7 +24,7 @@ ON DUPLICATE KEY UPDATE password='password123';
 -- 库存管理表
 CREATE TABLE IF NOT EXISTS inventory (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-  game_name VARCHAR(100) NOT NULL COMMENT '游戏名称',
+  app_name VARCHAR(100) NOT NULL COMMENT '应用名称',
   app_id VARCHAR(50) NOT NULL COMMENT '应用ID',
   tier_name VARCHAR(100) NOT NULL COMMENT '档位名称',
   tier_price DECIMAL(10, 2) NOT NULL COMMENT '档位价格',

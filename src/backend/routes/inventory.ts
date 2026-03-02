@@ -36,7 +36,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     const {
       page = 1,
       pageSize = 10,
-      game_name: gameName,
+      app_name: appName,
       app_id: appId,
       tier_name: tierName,
       status,
@@ -53,7 +53,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     console.log('解析后的参数:')
     console.log('  - page:', page)
     console.log('  - pageSize:', pageSize)
-    console.log('  - gameName:', gameName)
+    console.log('  - appName:', appName)
     console.log('  - appId:', appId)
     console.log('  - tierName:', tierName)
     console.log('  - status:', status, '(type:', typeof status, ')')
@@ -77,9 +77,9 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     const conditions: string[] = []
     const params: any[] = []
 
-    if (gameName && String(gameName).trim()) {
-      conditions.push('game_name LIKE ?')
-      params.push(`%${String(gameName).trim()}%`)
+    if (appName && String(appName).trim()) {
+      conditions.push('app_name LIKE ?')
+      params.push(`%${String(appName).trim()}%`)
     }
 
     if (appId && String(appId).trim()) {

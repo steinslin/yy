@@ -20,7 +20,7 @@ export interface ExcelColumnMapping {
 export const inventoryExcelMapping: ExcelColumnMapping[] = [
   {
     excelColumn: '游戏名称',
-    dbField: 'game_name',
+    dbField: 'app_name',
     required: true
   },
   {

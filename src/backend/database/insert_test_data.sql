@@ -9,7 +9,7 @@ USE login_db;
 -- DELETE FROM inventory WHERE id > 0;
 
 INSERT INTO inventory (
-  game_name, app_id, tier_name, tier_price, tier_code, currency_code,
+  app_name, app_id, tier_name, tier_price, tier_code, currency_code,
   inventory_no, status, created_at, in_account, in_time, out_account,
   out_time, used_time, remark, in_device,
   out_device, type, new_receipt, receipt

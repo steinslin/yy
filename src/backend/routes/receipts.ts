@@ -65,7 +65,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             return send(1, 'receipt 不能为空')
         }
 
-        // 上传前校验：该 app_id+product_id 必须在 app_products 中已配置，且必填字段齐全（用于补全 game_name、tier_name 等）
+        // 上传前校验：该 app_id+product_id 必须在 app_products 中已配置，且必填字段齐全（用于补全 app_name、tier_name 等）
         const [rows] = await pool.execute<unknown[]>('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])
         const app_product = rows?.[0] as AppProductRow | undefined
         console.log('/upload app_product', app_product)
@@ -77,7 +77,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             return send(1, `app_product 不全，缺少 ${missingField.label}`)
         }
 
-        const game_name = app_product.app_name ?? ''
+        const app_name = app_product.app_name ?? ''
         const tier_name = app_product.name ?? ''
         const tier_price = app_product.price ?? 0
         const tier_code = app_product.product_id ?? ''
@@ -95,7 +95,7 @@ router.post('/upload', async (req: Request, res: Response) => {
 
         const now = new Date()
         const inventoryRow = {
-            game_name,
+            app_name,
             app_id,
             tier_name,
             tier_price,
