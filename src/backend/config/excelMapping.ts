@@ -111,7 +111,7 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     }
   },
   {
-    excelColumn: '入库账户',
+    excelColumn: '入库用户',
     dbField: 'in_account'
   },
   {
@@ -121,7 +121,7 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     transform: (value: any) => formatDateTimeLocal(value)
   },
   {
-    excelColumn: '出库账户',
+    excelColumn: '出库用户',
     dbField: 'out_account'
   },
   {

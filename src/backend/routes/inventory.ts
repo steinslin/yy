@@ -299,7 +299,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
         continue
       }
 
-      // 凭证导入时，入库账号使用当前登录账号
+      // 凭证导入时，入库用户使用当前登录用户
       const currentUser = (req as any).user
       record.in_account = currentUser?.username ?? 'system'
 

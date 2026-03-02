@@ -121,7 +121,7 @@ yy/
   - `app_id`: 应用ID（模糊匹配）
   - `tier_name`: 档位名称（模糊匹配）
   - `status`: 状态（精确匹配，0-4）
-  - `in_account`: 入库账户（模糊匹配）
+  - `in_account`: 入库用户（模糊匹配）
   - `inventory_no`: 库存单号（模糊匹配）
   - `out_device`: 出库设备（模糊匹配）
   - `in_time_start` / `in_time_end`: 入库时间范围（日期范围）

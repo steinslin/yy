@@ -176,7 +176,7 @@ const Home = () => {
       render: (time: string) => (time ? new Date(time).toLocaleString('zh-CN') : '-')
     },
     {
-      title: '入库账户',
+      title: '入库用户',
       dataIndex: 'in_account',
       key: 'in_account',
       width: 120
@@ -189,7 +189,7 @@ const Home = () => {
       render: (time: string) => (time ? new Date(time).toLocaleString('zh-CN') : '-')
     },
     {
-      title: '出库账户',
+      title: '出库用户',
       dataIndex: 'out_account',
       key: 'out_account',
       width: 120
@@ -568,9 +568,9 @@ const Home = () => {
         '库存单号',
         '状态',
         '创建时间',
-        '入库账户',
+        '入库用户',
         '入库时间',
-        '出库账户',
+        '出库用户',
         '出库时间',
         '使用时间',
         '备注',
@@ -839,9 +839,9 @@ const Home = () => {
                     />
                   </div>
                   <div className="search-form-item">
-                    <label className="search-label">入库账号</label>
+                    <label className="search-label">入库用户</label>
                     <Input
-                      placeholder="请输入入库账号"
+                      placeholder="请输入入库用户"
                       value={searchForm.inAccount}
                       onChange={e => {
                         setSearchForm({ ...searchForm, inAccount: e.target.value })
@@ -1007,11 +1007,11 @@ const Home = () => {
                 ? new Date(detailRecord.created_at).toLocaleString('zh-CN')
                 : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="入库账户">{detailRecord.in_account ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="入库用户">{detailRecord.in_account ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="入库时间">
               {detailRecord.in_time ? new Date(detailRecord.in_time).toLocaleString('zh-CN') : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="出库账户">
+            <Descriptions.Item label="出库用户">
               {detailRecord.out_account ?? '-'}
             </Descriptions.Item>
             <Descriptions.Item label="出库时间">
