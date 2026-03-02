@@ -81,6 +81,10 @@ const GameTierManage = () => {
   /** 当前正在编辑的记录，为 null 表示新增模式 */
   const [editingRecord, setEditingRecord] = useState<AppProductRecord | null>(null)
   const [form] = Form.useForm()
+  /** 第一层表格：编辑应用名称弹窗 */
+  const [appNameModalVisible, setAppNameModalVisible] = useState(false)
+  const [editingApp, setEditingApp] = useState<{ app_id: string; app_name: string } | null>(null)
+  const [appNameForm] = Form.useForm()
 
   if (loading) {
     return (
@@ -181,6 +185,31 @@ const GameTierManage = () => {
       quantity: record.quantity ?? 0
     })
     setModalVisible(true)
+  }
+
+  /** 打开编辑应用名称弹窗（第一层表格操作），会同步更新该 app_id 下所有档位与凭证的应用名称 */
+  const openEditApp = (record: AppGroupRecord) => {
+    setEditingApp({ app_id: record.app_id, app_name: record.app_name ?? '' })
+    appNameForm.setFieldsValue({ app_name: record.app_name ?? '' })
+    setAppNameModalVisible(true)
+  }
+
+  /** 保存应用名称：调用接口批量更新 app_products 与 inventory 中该 app_id 下所有记录的 app_name */
+  const handleSaveAppName = async () => {
+    if (!editingApp) return
+    try {
+      const values = await appNameForm.validateFields()
+      await api.patch('/products/app-name', {
+        app_id: editingApp.app_id,
+        app_name: values.app_name ?? ''
+      })
+      message.success('应用名称已更新，该应用下所有档位与凭证已同步')
+      setAppNameModalVisible(false)
+      setEditingApp(null)
+      fetchList()
+    } catch (e) {
+      if (e instanceof Error && e.message) message.error(e.message)
+    }
   }
 
   /** 提交新增/编辑：校验表单后调用 PUT 或 POST，成功后关闭弹窗并刷新列表 */
@@ -312,17 +341,17 @@ const GameTierManage = () => {
       width: 170,
       render: (t: string) => (t ? new Date(t).toLocaleString('zh-CN') : '-')
     },
-    // {
-    //   title: '操作',
-    //   key: 'action',
-    //   width: 140,
-    //   fixed: 'right',
-    //   render: (_, record) => (
-    //     <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openAdd({ app_id: record.app_id, app_name: record.app_name })}>
-    //       新增档位
-    //     </Button>
-    //   )
-    // }
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      fixed: 'right',
+      render: (_: unknown, record: AppGroupRecord) => (
+        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditApp(record)}>
+          编辑
+        </Button>
+      )
+    }
   ]
 
   return (
@@ -437,7 +466,30 @@ const GameTierManage = () => {
         </Content>
       </Layout>
 
-      {/* 新增/编辑档位弹窗：应用ID、商品ID 在编辑时禁用 */}
+      {/* 第一层表格：编辑应用名称弹窗，保存后该 app_id 下所有档位与凭证会同步更新 */}
+      <Modal
+        title="编辑应用名称"
+        open={appNameModalVisible}
+        onOk={handleSaveAppName}
+        onCancel={() => {
+          setAppNameModalVisible(false)
+          setEditingApp(null)
+        }}
+        okText="保存"
+        cancelText="取消"
+        destroyOnClose
+        width={440}
+      >
+        {editingApp && (
+          <Form form={appNameForm} layout="vertical" preserve={false}>
+            <Form.Item name="app_name" label="应用名称" rules={[{ required: true, message: '请输入应用名称' }]}>
+              <Input placeholder="请输入应用名称" />
+            </Form.Item>
+          </Form>
+        )}
+      </Modal>
+
+      {/* 新增/编辑档位弹窗：编辑时不展示应用ID、应用名称、商品ID */}
       <Modal
         title={editingRecord ? '编辑档位' : '新增档位'}
         open={modalVisible}
@@ -447,23 +499,19 @@ const GameTierManage = () => {
         width={520}
       >
         <Form form={form} layout="vertical" preserve={false}>
-          <Form.Item
-            name="app_id"
-            label="应用ID"
-            rules={editingRecord ? [] : [{ required: true, message: '请输入应用ID' }]}
-          >
-            <Input placeholder="如 com.example.game" disabled={!!editingRecord} />
-          </Form.Item>
-          <Form.Item name="app_name" label="应用名称">
-            <Input placeholder="如 游戏名" />
-          </Form.Item>
-          <Form.Item
-            name="product_id"
-            label="商品ID"
-            rules={editingRecord ? [] : [{ required: true, message: '请输入商品ID' }]}
-          >
-            <Input placeholder="如 prodios_1" disabled={!!editingRecord} />
-          </Form.Item>
+          {!editingRecord && (
+            <>
+              <Form.Item name="app_id" label="应用ID" rules={[{ required: true, message: '请输入应用ID' }]}>
+                <Input placeholder="如 com.example.game" />
+              </Form.Item>
+              <Form.Item name="app_name" label="应用名称">
+                <Input placeholder="如 游戏名" />
+              </Form.Item>
+              <Form.Item name="product_id" label="商品ID" rules={[{ required: true, message: '请输入商品ID' }]}>
+                <Input placeholder="如 prodios_1" />
+              </Form.Item>
+            </>
+          )}
           <Form.Item name="name" label="档位名称">
             <Input placeholder="如 6元档位" />
           </Form.Item>

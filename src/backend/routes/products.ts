@@ -138,6 +138,40 @@ router.put('/:id', verifyToken, async (req: Request, res: Response) => {
   }
 })
 
+/** 按 app_id 批量更新应用名称：同时更新 app_products 与 inventory 中该 app_id 下所有记录的 app_name，需 token */
+router.patch('/app-name', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const body = req.body ?? {}
+    const { app_id: appId, app_name: appName } = body
+    if (!appId || String(appId).trim() === '') {
+      return res.status(400).json({ success: false, message: 'app_id 不能为空' })
+    }
+    const appIdStr = String(appId).trim()
+    const appNameStr = appName != null ? String(appName).trim() : ''
+
+    const [appProductsResult] = await pool.execute(
+      'UPDATE app_products SET app_name = ? WHERE app_id = ?',
+      [appNameStr, appIdStr]
+    )
+    const appProductsAffected = (appProductsResult as { affectedRows?: number }).affectedRows ?? 0
+
+    const [inventoryResult] = await pool.execute(
+      'UPDATE inventory SET app_name = ? WHERE app_id = ?',
+      [appNameStr, appIdStr]
+    )
+    const inventoryAffected = (inventoryResult as { affectedRows?: number }).affectedRows ?? 0
+
+    return res.status(200).json({
+      success: true,
+      message: '应用名称已更新',
+      data: { app_products_updated: appProductsAffected, inventory_updated: inventoryAffected }
+    })
+  } catch (err) {
+    console.error('PATCH /api/products/app-name error:', err)
+    return res.status(500).json({ success: false, message: (err as Error).message })
+  }
+})
+
 /** 游戏档位管理：删除一条，需 token */
 router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
