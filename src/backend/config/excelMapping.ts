@@ -3,6 +3,41 @@
  * 用于将用户上传的 Excel 文件中的列映射到数据库字段
  */
 
+/**
+ * Excel 日期序列号：1 = 1900-01-01，小数部分为当天时间。xlsx 读出的日期可能是该数字，
+ * 若直接用 new Date(num) 会被当成“1970 年起的毫秒数”导致变成 1970 年。
+ */
+const EXCEL_EPOCH = new Date(1899, 11, 31).getTime()
+const MS_PER_DAY = 86400 * 1000
+
+function parseExcelOrJsDate(value: unknown): Date | null {
+  if (value == null) return null
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value
+  if (typeof value === 'number') {
+    // Excel 序列号范围约 1~百万（1900-01-01 到约 2237 年），且用 new Date(num) 会得到 1970 年左右
+    if (value >= 1 && value < 1000000) {
+      const jsTime = EXCEL_EPOCH + value * MS_PER_DAY
+      const date = new Date(jsTime)
+      return isNaN(date.getTime()) ? null : date
+    }
+  }
+  const date = new Date(value as string | number)
+  return isNaN(date.getTime()) ? null : date
+}
+
+/** 将日期值格式化为本地时间 'YYYY-MM-DD HH:mm:ss'，支持 Excel 序列号与字符串/Date */
+function formatDateTimeLocal(value: unknown): string | null {
+  const date = parseExcelOrJsDate(value)
+  if (!date) return null
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const s = String(date.getSeconds()).padStart(2, '0')
+  return `${y}-${m}-${d} ${h}:${min}:${s}`
+}
+
 export interface ExcelColumnMapping {
   // Excel 列名（用户上传文件中的列名）
   excelColumn: string
@@ -82,12 +117,8 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
   {
     excelColumn: '入库时间',
     dbField: 'in_time',
-    // Excel 日期可能是 Date 或字符串，转为 MySQL 可用的 'YYYY-MM-DD HH:mm:ss'
-    transform: (value: any) => {
-      if (!value) return null
-      const date = new Date(value)
-      return isNaN(date.getTime()) ? null : date.toISOString().slice(0, 19).replace('T', ' ')
-    }
+    // 使用本地时间格式化，避免 toISOString() 的 UTC 时区偏差
+    transform: (value: any) => formatDateTimeLocal(value)
   },
   {
     excelColumn: '出库账户',
@@ -96,20 +127,12 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
   {
     excelColumn: '出库时间',
     dbField: 'out_time',
-    transform: (value: any) => {
-      if (!value) return null
-      const date = new Date(value)
-      return isNaN(date.getTime()) ? null : date.toISOString().slice(0, 19).replace('T', ' ')
-    }
+    transform: (value: any) => formatDateTimeLocal(value)
   },
   {
     excelColumn: '使用时间',
     dbField: 'used_time',
-    transform: (value: any) => {
-      if (!value) return null
-      const date = new Date(value)
-      return isNaN(date.getTime()) ? null : date.toISOString().slice(0, 19).replace('T', ' ')
-    }
+    transform: (value: any) => formatDateTimeLocal(value)
   },
   {
     excelColumn: '备注',
