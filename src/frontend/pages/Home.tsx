@@ -228,12 +228,6 @@ const Home = () => {
       width: 150
     },
     {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100
-    },
-    {
       title: '客户端凭证',
       dataIndex: 'new_receipt',
       key: 'new_receipt',
@@ -581,8 +575,7 @@ const Home = () => {
         '使用时间',
         '备注',
         '入库设备',
-        '出库设备',
-        '类型'
+        '出库设备'
       ]
 
       // 状态映射
@@ -615,8 +608,7 @@ const Home = () => {
             row.used_time ? new Date(row.used_time).toLocaleString('zh-CN') : '',
             `"${(row.remark ?? '').replace(/"/g, '""')}"`,
             `"${(row.in_device ?? '').replace(/"/g, '""')}"`,
-            `"${(row.out_device ?? '').replace(/"/g, '""')}"`,
-            `"${(row.type ?? '').replace(/"/g, '""')}"`
+            `"${(row.out_device ?? '').replace(/"/g, '""')}"`
           ].join(',')
         })
       ]
@@ -1010,7 +1002,6 @@ const Home = () => {
                 return statusMap[detailRecord.status] ?? '未知'
               })()}
             </Descriptions.Item>
-            <Descriptions.Item label="类型">{detailRecord.type ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="创建时间" span={2}>
               {detailRecord.created_at
                 ? new Date(detailRecord.created_at).toLocaleString('zh-CN')

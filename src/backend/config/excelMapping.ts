@@ -147,10 +147,6 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     dbField: 'out_device'
   },
   {
-    excelColumn: '类型',
-    dbField: 'type'
-  },
-  {
     excelColumn: '客户端凭证',
     dbField: 'new_receipt'
   },

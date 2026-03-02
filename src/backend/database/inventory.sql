@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS inventory (
   remark TEXT COMMENT '备注',
   in_device VARCHAR(200) COMMENT '入库设备',
   out_device VARCHAR(200) COMMENT '出库设备',
-  type VARCHAR(50) COMMENT '类型',
   transaction_date DATETIME NULL COMMENT '交易时间',
   transaction_id VARCHAR(100) COMMENT '库存单号/交易号（去重与对账用）',
   new_receipt LONGTEXT NOT NULL COMMENT '客户端凭证（当前有效收据 Base64）',

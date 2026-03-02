@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS inventory (
   transaction_id VARCHAR(100) COMMENT '库存单号/交易号（如苹果 transactionIdentifier，用于去重）',
   new_receipt LONGTEXT NOT NULL COMMENT '新凭证 Base64（当前有效收据）',
   receipt LONGTEXT NOT NULL COMMENT '旧凭证 Base64（临时/旧版收据，部分校验需同时传）',
-  type VARCHAR(50) COMMENT '类型（如 upload/import）',
   INDEX idx_app_id (app_id),
   INDEX idx_tier_code (tier_code),
   INDEX idx_transaction_id (transaction_id),
