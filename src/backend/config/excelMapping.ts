@@ -54,7 +54,7 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
   },
   {
     excelColumn: '库存单号',
-    dbField: 'inventory_no',
+    dbField: 'transaction_id',
     required: true
   },
   {

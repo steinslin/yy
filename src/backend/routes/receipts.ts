@@ -25,7 +25,7 @@ interface InventoryRow {
     receipt: string
 }
 
-const REQUIRED_BODY_KEYS = ['app_id', 'product_id', 'transaction_date', 'transaction_id', 'new_receipt'] as const
+const REQUIRED_BODY_KEYS = ['app_id', 'product_id', 'transaction_date', 'transaction_id', 'new_receipt', 'receipt'] as const
 const REQUIRED_APP_PRODUCT_FIELDS: { key: keyof AppProductRow; label: string }[] = [
     { key: 'app_name', label: 'app_name' },
     { key: 'name', label: 'name' },
@@ -101,7 +101,6 @@ router.post('/upload', async (req: Request, res: Response) => {
             tier_price,
             tier_code,
             currency_code,
-            inventory_no: crypto.randomUUID(),
             status: 0,
             created_at: now,
             in_account: 'system',

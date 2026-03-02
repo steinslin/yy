@@ -103,7 +103,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     }
 
     if (inventoryNo && String(inventoryNo).trim()) {
-      conditions.push('inventory_no LIKE ?')
+      conditions.push('transaction_id LIKE ?')
       params.push(`%${String(inventoryNo).trim()}%`)
     }
 
@@ -293,9 +293,10 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
       record.new_receipt = newReceiptVal
       record.receipt = receiptVal
 
-      // 生成库存单号（如果为空）
-      if (!record.inventory_no || String(record.inventory_no).trim() === '') {
-        record.inventory_no = `INV-${Date.now()}-${i}`
+      // 库存单号对应 transaction_id，不允许为空，不进行导入
+      if (!record.transaction_id || String(record.transaction_id).trim() === '') {
+        errors.push(`第 ${rowNum} 行库存单号(transaction_id)不能为空，已跳过`)
+        continue
       }
 
       insertData.push(record)
@@ -322,7 +323,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
     const placeholders = fields.map(() => '?').join(', ')
     const values = insertData.map(record => fields.map(field => record[field]))
 
-    // INSERT IGNORE：若 inventory_no 已存在则跳过该行，不报错，便于重复导入时只插入新单号
+    // INSERT IGNORE：若 transaction_id 已存在则跳过该行（需表上有唯一约束时生效）
     const sql = `INSERT IGNORE INTO inventory (${fields.join(', ')}) VALUES (${placeholders})`
 
     let successCount = 0
@@ -338,7 +339,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
         errorCount++
         console.error('插入数据失败:', error)
         if (error.code === 'ER_DUP_ENTRY') {
-          errors.push(`库存单号 ${record.inventory_no} 已存在`)
+          errors.push(`库存单号(transaction_id) ${record.transaction_id} 已存在`)
         } else {
           errors.push(`插入数据失败: ${error.message}`)
         }

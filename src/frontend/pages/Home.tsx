@@ -137,8 +137,8 @@ const Home = () => {
     },
     {
       title: '库存单号',
-      dataIndex: 'inventory_no',
-      key: 'inventory_no',
+      dataIndex: 'transaction_id',
+      key: 'transaction_id',
       width: 150,
       ellipsis: true,
       render: (val: string) => {
@@ -605,7 +605,7 @@ const Home = () => {
             row.tier_price ?? '',
             `"${(row.tier_code ?? '').replace(/"/g, '""')}"`,
             `"${(row.currency_code ?? '').replace(/"/g, '""')}"`,
-            `"${(row.inventory_no ?? '').replace(/"/g, '""')}"`,
+            `"${(row.transaction_id ?? '').replace(/"/g, '""')}"`,
             statusMap[row.status] ?? '未知',
             row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '',
             `"${(row.in_account ?? '').replace(/"/g, '""')}"`,
@@ -997,7 +997,7 @@ const Home = () => {
               {detailRecord.currency_code ?? '-'}
             </Descriptions.Item>
             <Descriptions.Item label="库存单号" span={2}>
-              {detailRecord.inventory_no ?? '-'}
+              {detailRecord.transaction_id ?? '-'}
             </Descriptions.Item>
             <Descriptions.Item label="状态">
               {(() => {
