@@ -283,7 +283,7 @@ const DeviceManage = () => {
     { key: '3', icon: <MobileOutlined />, label: '设备管理' },
     { key: '3-1', icon: <ApartmentOutlined />, label: '设备分组管理', onClick: () => navigate('/device-groups') },
     { key: '4', icon: <CheckCircleOutlined />, label: '任务管理' },
-    { key: '5', icon: <PlayCircleOutlined />, label: '游戏档位管理' },
+    { key: '5', icon: <PlayCircleOutlined />, label: '游戏档位管理', onClick: () => navigate('/game-tiers') },
     { key: '6', icon: <FileSearchOutlined />, label: '查看日志' },
     { key: '7', icon: <TeamOutlined />, label: '用户管理' },
     { key: '8', icon: <SettingOutlined />, label: '系统设置' }

@@ -32,6 +32,7 @@ import {
   FileSearchOutlined,
   TeamOutlined,
   SettingOutlined,
+  ApartmentOutlined,
   EyeOutlined,
   UploadOutlined,
   DownloadOutlined
@@ -307,6 +308,12 @@ const Home = () => {
       icon: <MobileOutlined />,
       label: '设备管理',
       onClick: () => navigate('/devices')
+    },
+    {
+      key: '3-1',
+      icon: <ApartmentOutlined />,
+      label: '设备分组管理',
+      onClick: () => navigate('/device-groups')
     },
     {
       key: '4',
