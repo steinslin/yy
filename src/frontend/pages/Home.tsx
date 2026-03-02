@@ -539,6 +539,13 @@ const Home = () => {
         dataToExport = Array.from(selectedRows.values())
       }
 
+      if (dataToExport.length === 0) {
+        message.warning('暂无数据，无法导出')
+        setExportConfirmVisible(false)
+        setExportSetOutbound(false)
+        return
+      }
+
       // 若用户选择导出后设为出库状态，则批量更新状态为 3（出库成功）
       if (setOutbound && dataToExport.length > 0) {
         const ids = dataToExport.map((row: any) => row.id).filter((id: any) => id != null)
@@ -636,8 +643,14 @@ const Home = () => {
     }
   }
 
-  // 打开批量导出确认弹窗
+  // 打开批量导出确认弹窗（无数据时不执行）
   const handleBatchExportClick = () => {
+    const hasSelection = selectedRows.size > 0
+    const hasAnyData = pagination.total > 0
+    if (!hasSelection && !hasAnyData) {
+      message.warning('暂无数据，无法导出')
+      return
+    }
     setExportSetOutbound(false)
     setExportConfirmVisible(true)
   }
