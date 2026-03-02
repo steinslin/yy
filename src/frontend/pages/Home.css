@@ -90,6 +90,28 @@
   min-height: calc(100vh - 112px);
 }
 
+/* 游戏档位管理表格：展开箭头样式 */
+.game-tier-expand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s, background-color 0.2s;
+}
+.game-tier-expand-icon:hover {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+}
+.game-tier-expand-icon .anticon {
+  transition: transform 0.2s;
+}
+
 .search-section {
   margin-bottom: 24px;
   padding-bottom: 24px;
@@ -221,6 +243,23 @@
 
 .ant-modal .ant-descriptions-item-content {
   border-bottom: 1px solid #e8e8e8;
+}
+
+/* 凭证详情弹窗：标签文案不换行，且每列标签宽度一致 */
+.credential-detail-modal .ant-descriptions-item-label {
+  white-space: nowrap;
+  width: 130px;
+  min-width: 130px;
+}
+
+/* 凭证详情弹窗：同一行多个内容单元格等宽（固定表布局，两列内容均分剩余宽度；span=2 的单元格仍占满两列） */
+.credential-detail-modal .ant-descriptions-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.credential-detail-modal .ant-descriptions-item-content {
+  width: calc((100% - 260px) / 2);
+  box-sizing: border-box;
 }
 
 .ant-modal .ant-descriptions-row {

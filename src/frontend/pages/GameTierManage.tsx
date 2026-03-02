@@ -31,7 +31,9 @@ import {
   ApartmentOutlined,
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  RightOutlined,
+  DownOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
@@ -231,21 +233,21 @@ const GameTierManage = () => {
       if (!key) continue
       const prev = map.get(key)
       const appName = (r.app_name ?? '').trim()
-      const updatedAt = r.updated_at ?? r.created_at
+      const createdAt = r.created_at ?? r.updated_at
       if (!prev) {
         map.set(key, {
           app_id: key,
           app_name: appName,
           tier_count: 1,
-          updated_at: updatedAt,
+          updated_at: createdAt,
           tiers: [r]
         })
       } else {
         prev.tiers.push(r)
         prev.tier_count += 1
         if (!prev.app_name && appName) prev.app_name = appName
-        if (updatedAt && (!prev.updated_at || String(updatedAt) > String(prev.updated_at))) {
-          prev.updated_at = updatedAt
+        if (createdAt && (!prev.updated_at || String(createdAt) > String(prev.updated_at))) {
+          prev.updated_at = createdAt
         }
       }
     }
@@ -272,9 +274,9 @@ const GameTierManage = () => {
     { title: '价格', dataIndex: 'price', key: 'price', width: 90 },
     { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 80 },
     {
-      title: '更新时间',
-      dataIndex: 'updated_at',
-      key: 'updated_at',
+      title: '创建时间',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 170,
       render: (t: string) => (t ? new Date(t).toLocaleString('zh-CN') : '-')
     },
@@ -304,7 +306,7 @@ const GameTierManage = () => {
     { title: '应用名称', dataIndex: 'app_name', key: 'app_name', width: 160, ellipsis: true, render: (v: string) => (v ? v : '-') },
     { title: '档位数量', dataIndex: 'tier_count', key: 'tier_count', width: 100 },
     {
-      title: '最后更新时间',
+      title: '创建时间',
       dataIndex: 'updated_at',
       key: 'updated_at',
       width: 170,
@@ -400,6 +402,16 @@ const GameTierManage = () => {
               dataSource={pagedGroups}
               loading={tableLoading}
               expandable={{
+                expandIcon: ({ expanded, onExpand, record }) => (
+                  <span
+                    className="game-tier-expand-icon"
+                    onClick={e => { onExpand(record, e) }}
+                    role="button"
+                    aria-label={expanded ? '收起' : '展开'}
+                  >
+                    {expanded ? <DownOutlined /> : <RightOutlined />}
+                  </span>
+                ),
                 expandedRowRender: (record) => (
                   <Table<AppProductRecord>
                     rowKey="id"

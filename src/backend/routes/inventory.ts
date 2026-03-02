@@ -43,7 +43,8 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       in_account: inAccount,
       inventory_no: inventoryNo,
       out_device: outDevice,
-      in_time: inTime
+      in_time_start: inTimeStart,
+      in_time_end: inTimeEnd
     } = req.query
 
     // 打印所有请求参数
@@ -59,7 +60,8 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     console.log('  - inAccount:', inAccount)
     console.log('  - inventoryNo:', inventoryNo)
     console.log('  - outDevice:', outDevice)
-    console.log('  - inTime:', inTime)
+    console.log('  - inTimeStart:', inTimeStart)
+    console.log('  - inTimeEnd:', inTimeEnd)
     console.log('========================')
 
     const currentPage = Number(page) || 1
@@ -110,9 +112,13 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       params.push(`%${String(outDevice).trim()}%`)
     }
 
-    if (inTime && String(inTime).trim()) {
-      conditions.push('DATE(in_time) = ?')
-      params.push(String(inTime).trim())
+    if (inTimeStart && String(inTimeStart).trim()) {
+      conditions.push('DATE(in_time) >= ?')
+      params.push(String(inTimeStart).trim())
+    }
+    if (inTimeEnd && String(inTimeEnd).trim()) {
+      conditions.push('DATE(in_time) <= ?')
+      params.push(String(inTimeEnd).trim())
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''

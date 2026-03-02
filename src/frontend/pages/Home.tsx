@@ -969,6 +969,7 @@ const Home = () => {
           </Button>
         ]}
         width={800}
+        className="credential-detail-modal"
       >
         {detailRecord && (
           <Descriptions column={2} bordered>
