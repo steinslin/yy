@@ -1,4 +1,4 @@
--- 为已存在的 inventory 表新增：交易时间、交易号、新/旧凭证 Base64（已有数据库迁移用）
+-- 迁移脚本：为已存在的 inventory 表新增 transaction_date、transaction_id、new_receipt、receipt 等字段（仅对老库执行一次）
 USE login_db;
 
 ALTER TABLE inventory

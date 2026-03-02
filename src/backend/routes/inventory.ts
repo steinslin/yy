@@ -130,8 +130,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
     const total = countResult[0]?.total ?? 0
 
-    // 查询数据 - 将 LIMIT 和 OFFSET 直接拼接到 SQL 中，避免参数问题
-    // 确保 limit 和 offset 是正整数
+    // 查询数据：LIMIT/OFFSET 用已校验的 safeLimit、safeOffset 拼接到 SQL 中（mysql2 对 LIMIT 占位符兼容性不佳，故不用 ?）
     const safeLimit = Math.max(1, Math.floor(Number(limit)) || 10)
     const safeOffset = Math.max(0, Math.floor(Number(offset)) || 0)
 
@@ -216,7 +215,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
       })
     }
 
-    // 构建列索引映射
+    // 构建「表头列名 -> 数据库字段」的列索引：Excel 第几列对应哪个 db 字段，后续按 dbField 取 row[columnIndex]
     const columnIndexMap: Record<string, number> = {}
     headers.forEach((header, index) => {
       const headerStr = String(header).trim()
@@ -226,7 +225,8 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
       }
     })
 
-    // 处理数据行
+    // 逐行解析：按映射取值、做 transform、补默认值，校验必填与凭证非空后加入 insertData
+    // 注意：new_receipt/receipt 为空的行会跳过并记入 errors，不导入
     const insertData: any[] = []
     const errors: string[] = []
 
@@ -241,25 +241,20 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
 
       const record: Record<string, any> = {}
 
-      // 根据映射配置提取数据
+      // 按 excelMapping 配置：从 row[列下标] 取原始值 → transform（如状态中文转数字、日期格式）→ 空且非必填时用 defaultValue
       for (const mapping of inventoryExcelMapping) {
         const columnIndex = columnIndexMap[mapping.dbField]
         if (columnIndex !== undefined && columnIndex < row.length) {
           let value = row[columnIndex]
-
-          // 应用转换函数
           if (mapping.transform && value !== null && value !== undefined) {
             value = mapping.transform(value)
           }
-
-          // 如果值为空且不是必填字段，使用默认值
           if (
             (value === null || value === undefined || String(value).trim() === '') &&
             !mapping.required
           ) {
             value = mapping.defaultValue ?? null
           }
-
           record[mapping.dbField] = value
         } else if (mapping.defaultValue !== undefined) {
           record[mapping.dbField] = mapping.defaultValue
@@ -321,13 +316,13 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
     const placeholders = fields.map(() => '?').join(', ')
     const values = insertData.map(record => fields.map(field => record[field]))
 
-    // 使用 INSERT IGNORE 避免重复键错误
+    // INSERT IGNORE：若 inventory_no 已存在则跳过该行，不报错，便于重复导入时只插入新单号
     const sql = `INSERT IGNORE INTO inventory (${fields.join(', ')}) VALUES (${placeholders})`
 
     let successCount = 0
     let errorCount = 0
 
-    // 逐条插入以便处理错误
+    // 逐条执行以便区分成功/失败条数并收集 ER_DUP_ENTRY 等错误信息
     for (const record of insertData) {
       try {
         const recordValues = fields.map(field => record[field])
@@ -363,7 +358,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
   }
 })
 
-// 批量更新凭证状态（用于导出后设为出库成功），同步更新出库时间、出库账户、备注
+// 批量更新凭证状态：常用于「导出选中凭证后」将这批记录标记为出库成功(3)，并写入 out_time、out_account、remark
 router.patch('/batch-status', verifyToken, async (req: Request, res: Response) => {
   try {
     const { ids, status } = req.body as { ids?: number[]; status?: number }

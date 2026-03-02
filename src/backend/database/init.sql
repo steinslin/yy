@@ -3,7 +3,7 @@ CREATE DATABASE IF NOT EXISTS login_db CHARACTER SET utf8mb4 COLLATE utf8mb4_uni
 
 USE login_db;
 
--- 创建用户表
+-- 用户表：登录与权限，密码当前为明文（生产建议改为 bcrypt 哈希）
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
@@ -42,10 +42,10 @@ CREATE TABLE IF NOT EXISTS inventory (
   in_device VARCHAR(200) COMMENT '入库设备',
   out_device VARCHAR(200) COMMENT '出库设备',
   transaction_date DATETIME NULL COMMENT '交易时间',
-  transaction_id VARCHAR(100) COMMENT '交易号',
-  new_receipt LONGTEXT NOT NULL COMMENT '新凭证 Base64',
-  receipt LONGTEXT NOT NULL COMMENT '旧凭证 Base64',
-  type VARCHAR(50) COMMENT '类型',
+  transaction_id VARCHAR(100) COMMENT '交易号（如苹果 transactionIdentifier，用于去重）',
+  new_receipt LONGTEXT NOT NULL COMMENT '新凭证 Base64（当前有效收据）',
+  receipt LONGTEXT NOT NULL COMMENT '旧凭证 Base64（临时/旧版收据，部分校验需同时传）',
+  type VARCHAR(50) COMMENT '类型（如 upload/import）',
   INDEX idx_app_id (app_id),
   INDEX idx_tier_code (tier_code),
   INDEX idx_inventory_no (inventory_no),
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS inventory (
   INDEX idx_created_at (created_at),
   INDEX idx_in_time (in_time),
   INDEX idx_out_time (out_time)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='库存管理表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='库存管理表：凭证入库、出库、状态流转';
 
 -- 应用商品表
 CREATE TABLE IF NOT EXISTS app_products (

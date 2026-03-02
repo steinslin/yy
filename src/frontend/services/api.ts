@@ -9,12 +9,11 @@ const api = axios.create({
   }
 })
 
-// 请求拦截器：添加 token
+// 请求拦截器：从 localStorage 取 token，并同时带 Authorization(Bearer) 与 x-access-token，兼容后端两种校验方式
 api.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
     if (token) {
-      // 同时设置 Authorization 和 x-access-token，确保兼容性
       config.headers.Authorization = `Bearer ${token}`
       config.headers['x-access-token'] = token
     }
@@ -25,7 +24,7 @@ api.interceptors.request.use(
   }
 )
 
-// 响应拦截器：处理 token 过期
+// 响应拦截器：401 时清空本地登录态并跳转登录页，避免过期 token 继续请求
 api.interceptors.response.use(
   response => response,
   async error => {

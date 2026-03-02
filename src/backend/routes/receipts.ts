@@ -65,6 +65,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             return send(1, 'receipt 不能为空')
         }
 
+        // 上传前校验：该 app_id+product_id 必须在 app_products 中已配置，且必填字段齐全（用于补全 game_name、tier_name 等）
         const [rows] = await pool.execute<unknown[]>('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])
         const app_product = rows?.[0] as AppProductRow | undefined
         console.log('/upload app_product', app_product)
@@ -82,7 +83,7 @@ router.post('/upload', async (req: Request, res: Response) => {
         const tier_code = app_product.product_id ?? ''
         const currency_code = 'CNY' // TODO
 
-        // 去重：同 app_id + product_id(tier_code) + transaction_id 视为同一笔，不重复插入
+        // 去重：同一笔交易（app_id + tier_code + transaction_id）只允许一条库存记录，避免客户端重复上传
         const [existing] = await pool.execute<unknown[]>(
             'SELECT id FROM inventory WHERE app_id = ? AND tier_code = ? AND transaction_id = ? LIMIT 1',
             [app_id, tier_code, transaction_id]
@@ -192,6 +193,7 @@ router.post('/get', async (req: Request, res: Response) => {
             return sendErr(1, '缺少 app_id 或 product_id')
         }
 
+        // 事务 + FOR UPDATE：锁定「待出库」中的一条，防止多端并发取到同一条凭证
         const conn = await pool.getConnection()
         try {
             await conn.beginTransaction()
@@ -206,6 +208,7 @@ router.post('/get', async (req: Request, res: Response) => {
                 return sendErr(400, '暂无可用凭证，请先在入库完成购买并上传凭证')
             }
 
+            // 取走后立即标记为「出库中」，避免其他请求再取到同一条
             console.log('/get update status to 1')
             await conn.execute('UPDATE inventory SET status = 1, out_time = NOW() WHERE id = ?', [row.id])
             await conn.commit()

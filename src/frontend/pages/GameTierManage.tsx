@@ -38,6 +38,7 @@ import './Home.css'
 
 const { Header, Sider, Content } = Layout
 
+/** 单个商品/档位记录（内购产品） */
 interface AppProductRecord {
   id: number
   app_id: string
@@ -50,6 +51,7 @@ interface AppProductRecord {
   updated_at?: string
 }
 
+/** 按应用分组的记录，包含该应用下所有档位列表 */
 interface AppGroupRecord {
   app_id: string
   app_name: string
@@ -58,10 +60,14 @@ interface AppGroupRecord {
   tiers: AppProductRecord[]
 }
 
+/**
+ * 游戏档位管理页：按应用（app_id）分组展示内购档位，支持搜索、新增、编辑、删除。
+ */
 const GameTierManage = () => {
   const { logout, loading } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  /** 从接口拉取到的原始商品列表（未分组） */
   const [productList, setProductList] = useState<AppProductRecord[]>([])
   const [tableLoading, setTableLoading] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 })
@@ -69,6 +75,7 @@ const GameTierManage = () => {
   const [searchAppName, setSearchAppName] = useState('')
   const [searchTimeRange, setSearchTimeRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
+  /** 当前正在编辑的记录，为 null 表示新增模式 */
   const [editingRecord, setEditingRecord] = useState<AppProductRecord | null>(null)
   const [form] = Form.useForm()
 
@@ -80,6 +87,7 @@ const GameTierManage = () => {
     )
   }
 
+  /** 侧边栏菜单项 */
   const menuItems: MenuProps['items'] = [
     { key: '1', icon: <FileTextOutlined />, label: '凭证管理', onClick: () => navigate('/home') },
     { key: '2', icon: <AppleOutlined />, label: 'AppleID管理' },
@@ -91,6 +99,7 @@ const GameTierManage = () => {
     { key: '8', icon: <SettingOutlined />, label: '系统设置' }
   ]
 
+  /** 头像下拉菜单（退出登录等） */
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'logout',
@@ -103,10 +112,11 @@ const GameTierManage = () => {
     }
   ]
 
+  /** 从后端拉取商品列表，支持按应用ID、应用名称、创建时间筛选；数据在前端按 app_id 分组展示 */
   const fetchList = async () => {
     setTableLoading(true)
     try {
-      // 这里按 app_id 分组展示（父表是“游戏/应用”），所以一次拉取较多数据后前端分组。
+      // 按 app_id 分组展示（父表是“游戏/应用”），一次拉取较多数据后在前端分组
       const params: Record<string, string | number> = { page: 1, pageSize: 5000 }
       if (searchAppId.trim()) params.app_id = searchAppId.trim()
       if (searchAppName.trim()) params.app_name = searchAppName.trim()
@@ -133,6 +143,7 @@ const GameTierManage = () => {
   }, [])
 
   const handleSearch = () => fetchList()
+  /** 清空搜索条件并重新拉取列表 */
   const handleReset = () => {
     setSearchAppId('')
     setSearchAppName('')
@@ -140,6 +151,7 @@ const GameTierManage = () => {
     setTimeout(() => fetchList(), 0)
   }
 
+  /** 打开新增档位弹窗，可传入预设的 app_id / app_name（如从某行“新增档位”进入） */
   const openAdd = (preset?: { app_id?: string; app_name?: string }) => {
     setEditingRecord(null)
     form.setFieldsValue({
@@ -153,6 +165,7 @@ const GameTierManage = () => {
     setModalVisible(true)
   }
 
+  /** 打开编辑档位弹窗，表单回填当前记录 */
   const openEdit = (record: AppProductRecord) => {
     setEditingRecord(record)
     form.setFieldsValue({
@@ -166,6 +179,7 @@ const GameTierManage = () => {
     setModalVisible(true)
   }
 
+  /** 提交新增/编辑：校验表单后调用 PUT 或 POST，成功后关闭弹窗并刷新列表 */
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields()
@@ -195,6 +209,7 @@ const GameTierManage = () => {
     }
   }
 
+  /** 删除指定档位并刷新列表 */
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/products/${id}`)
@@ -206,6 +221,7 @@ const GameTierManage = () => {
     }
   }
 
+  /** 将平铺的 productList 按 app_id 聚合成分组列表，每组包含 tiers 和 tier_count，并按 app_id、子表 product_id 排序 */
   const groupList: AppGroupRecord[] = useMemo(() => {
     const map = new Map<string, AppGroupRecord>()
     for (const r of productList) {
@@ -240,12 +256,14 @@ const GameTierManage = () => {
     return list
   }, [productList])
 
+  /** 当前页的分组数据，用于表格 dataSource */
   const pagedGroups = useMemo(() => {
     const start = (pagination.current - 1) * pagination.pageSize
     const end = start + pagination.pageSize
     return groupList.slice(start, end)
   }, [groupList, pagination.current, pagination.pageSize])
 
+  /** 展开行内子表：每个应用下的档位列表列定义 */
   const tierColumns: ColumnsType<AppProductRecord> = [
     { title: '商品ID', dataIndex: 'product_id', key: 'product_id', width: 140 },
     { title: '档位名称', dataIndex: 'name', key: 'name', width: 160, ellipsis: true },
@@ -278,6 +296,7 @@ const GameTierManage = () => {
     }
   ]
 
+  /** 主表列：按应用分组后的应用ID、名称、档位数量、最后更新时间 */
   const groupColumns: ColumnsType<AppGroupRecord> = [
     { title: '应用ID', dataIndex: 'app_id', key: 'app_id', width: 260, ellipsis: true },
     { title: '应用名称', dataIndex: 'app_name', key: 'app_name', width: 160, ellipsis: true, render: (v: string) => (v ? v : '-') },
@@ -304,6 +323,7 @@ const GameTierManage = () => {
 
   return (
     <Layout className="home-layout">
+      {/* 可折叠侧边栏： logo + 主导航 */}
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} width={200} className="home-sider">
         <div className="logo">
           <h2>{collapsed ? '云' : '云充值'}</h2>
@@ -329,6 +349,7 @@ const GameTierManage = () => {
         </Header>
         <Content className="home-content" style={{ marginLeft: collapsed ? 80 : 200 }}>
           <div className="content-wrapper">
+            {/* 搜索区：应用ID、应用名称、创建时间范围 */}
             <div className="search-section">
               <h3>游戏档位管理</h3>
               <div className="search-form">
@@ -370,6 +391,7 @@ const GameTierManage = () => {
                 </div>
               </div>
             </div>
+            {/* 主表：按应用分组，可展开查看该应用下所有档位子表 */}
             <Table<AppGroupRecord>
               rowKey="app_id"
               columns={groupColumns}
@@ -401,6 +423,7 @@ const GameTierManage = () => {
         </Content>
       </Layout>
 
+      {/* 新增/编辑档位弹窗：应用ID、商品ID 在编辑时禁用 */}
       <Modal
         title={editingRecord ? '编辑档位' : '新增档位'}
         open={modalVisible}

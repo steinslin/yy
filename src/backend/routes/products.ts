@@ -157,7 +157,7 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   }
 })
 
-/** 采集商品信息并上传至服务器，无需 token */
+/** 采集商品信息并上传：由客户端/设备调用，将应用内购商品列表同步到 app_products，无需登录 token */
 router.post('/collect', async (req: Request, res: Response) => {
   try {
     const { app_id: appId, app_name: appName, products } = req.body ?? {}
@@ -181,7 +181,7 @@ router.post('/collect', async (req: Request, res: Response) => {
       const q = p?.quantity
       const quantity = typeof q === 'number' && Number.isFinite(q) ? Math.max(0, Math.floor(q)) : 0
 
-      // 根据 app_id + product_id 判断是否已存在，存在则跳过
+      // 同一 app_id + product_id 只保留一条，重复采集时跳过
       const [existing] = await pool.execute(
         'SELECT 1 FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1',
         [appIdStr, productId]
@@ -201,7 +201,7 @@ router.post('/collect', async (req: Request, res: Response) => {
   }
 })
 
-/** 获取商品信息列表，可选 app_id 过滤，无需 token */
+/** 获取商品列表：供客户端按 app_id 拉取档位配置，无需 token */
 router.post('/get', async (req: Request, res: Response) => {
   try {
     const { app_id: appId } = req.body ?? {}

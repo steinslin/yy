@@ -42,7 +42,7 @@ router.post('/login', async (req: Request, res: Response) => {
     console.log('数据库中的密码:', user.password)
     console.log('输入的密码:', password)
 
-    // 验证密码（明文比较）
+    // 验证密码：当前为明文比较；生产环境建议改为 bcrypt 等哈希比对
     const isPasswordValid = String(password) === String(user.password)
     console.log('密码验证结果:', isPasswordValid)
 
@@ -155,15 +155,13 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 })
 
-// 验证 token 中间件
+// 验证 token 中间件：Authorization(Bearer) 与 x-access-token 二选一，兼容不同客户端传参方式
 export const verifyToken = (req: Request, res: Response, next: any) => {
-  // 优先从 Authorization header 获取，格式: Bearer <token>
   let token: string | undefined
   const authHeader = req.headers.authorization
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1]
   } else {
-    // 如果没有 Authorization header，尝试从 x-access-token 获取
     token = req.headers['x-access-token'] as string | undefined
   }
 

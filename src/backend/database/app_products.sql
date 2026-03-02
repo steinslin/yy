@@ -1,6 +1,6 @@
 USE login_db;
 
--- 应用商品表
+-- 应用商品表：维护各应用（app_id）下的内购档位（product_id），与 inventory 的 tier_code 对应，供上传凭证时补全 game_name/tier_name 等
 CREATE TABLE IF NOT EXISTS app_products (
   id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
   app_id VARCHAR(100) NOT NULL COMMENT '应用ID',

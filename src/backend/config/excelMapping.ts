@@ -61,6 +61,7 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
     excelColumn: '状态',
     dbField: 'status',
     defaultValue: 0,
+    // Excel 中可能是中文或数字，统一转为 0~3
     transform: (value: any) => {
       if (typeof value === 'string') {
         const statusMap: Record<string, number> = {
@@ -81,6 +82,7 @@ export const inventoryExcelMapping: ExcelColumnMapping[] = [
   {
     excelColumn: '入库时间',
     dbField: 'in_time',
+    // Excel 日期可能是 Date 或字符串，转为 MySQL 可用的 'YYYY-MM-DD HH:mm:ss'
     transform: (value: any) => {
       if (!value) return null
       const date = new Date(value)
