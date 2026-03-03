@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import path from 'path'
 import express, { type Application, type Request, type Response } from 'express'
 import cors from 'cors'
@@ -10,6 +11,8 @@ import { testConnection } from './config/database'
 
 const app: Application = express()
 const port = process.env.PORT ?? 3000
+
+console.log('process.env.PORT', process.env.PORT)
 
 // 跨域：允许所有来源，或通过 CORS_ORIGIN 指定（多个用逗号分隔）
 const corsOrigin = process.env.CORS_ORIGIN
