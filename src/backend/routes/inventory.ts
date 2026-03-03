@@ -42,7 +42,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       status,
       in_account: inAccount,
       inventory_no: inventoryNo,
-      out_device: outDevice,
+      import_type: importType,
       in_time_start: inTimeStart,
       in_time_end: inTimeEnd
     } = req.query
@@ -59,7 +59,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     console.log('  - status:', status, '(type:', typeof status, ')')
     console.log('  - inAccount:', inAccount)
     console.log('  - inventoryNo:', inventoryNo)
-    console.log('  - outDevice:', outDevice)
+    console.log('  - importType:', importType)
     console.log('  - inTimeStart:', inTimeStart)
     console.log('  - inTimeEnd:', inTimeEnd)
     console.log('========================')
@@ -107,9 +107,9 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       params.push(`%${String(inventoryNo).trim()}%`)
     }
 
-    if (outDevice && String(outDevice).trim()) {
-      conditions.push('out_device LIKE ?')
-      params.push(`%${String(outDevice).trim()}%`)
+    if (importType && String(importType).trim()) {
+      conditions.push('import_type = ?')
+      params.push(String(importType).trim())
     }
 
     if (inTimeStart && String(inTimeStart).trim()) {
@@ -299,9 +299,10 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
         continue
       }
 
-      // 凭证导入时，入库用户使用当前登录用户
+      // 凭证导入时，入库用户使用当前登录用户，入库类型为 Excel 导入
       const currentUser = (req as any).user
       record.in_account = currentUser?.username ?? 'system'
+      record.import_type = 'import'
 
       insertData.push(record)
     }
@@ -322,31 +323,57 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
       })
     }
 
-    // 构建批量插入 SQL
-    const fields = Object.keys(insertData[0])
-    const placeholders = fields.map(() => '?').join(', ')
-    const values = insertData.map(record => fields.map(field => record[field]))
+    // 根据 app_id + tier_code + transaction_id 过滤：已存在的记录不导入
+    const keys = insertData.map((r: any) => [r.app_id, r.tier_code, r.transaction_id])
+    const existingSet = new Set<string>()
+    if (keys.length > 0) {
+      const placeholders = keys.map(() => '(?, ?, ?)').join(', ')
+      const params = keys.flat()
+      const [existingRows] = await pool.execute<unknown[]>(
+        `SELECT app_id, tier_code, transaction_id FROM inventory WHERE (app_id, tier_code, transaction_id) IN (${placeholders})`,
+        params
+      )
+      const rows = Array.isArray(existingRows) ? existingRows : []
+      for (const row of rows as Array<{ app_id: string; tier_code: string; transaction_id: string }>) {
+        existingSet.add(`${row.app_id}|${row.tier_code}|${row.transaction_id}`)
+      }
+    }
+    const toInsert: any[] = []
+    for (const record of insertData) {
+      const key = `${record.app_id}|${record.tier_code}|${record.transaction_id}`
+      if (existingSet.has(key)) {
+        errors.push(`app_id=${record.app_id} tier_code=${record.tier_code} transaction_id=${record.transaction_id} 已存在，已跳过`)
+        continue
+      }
+      toInsert.push(record)
+      existingSet.add(key) // 同批内也去重
+    }
 
-    // INSERT IGNORE：若 transaction_id 已存在则跳过该行（需表上有唯一约束时生效）
-    const sql = `INSERT IGNORE INTO inventory (${fields.join(', ')}) VALUES (${placeholders})`
+    if (toInsert.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '所有记录均已存在，无需导入',
+        data: { errors: errors.length > 0 ? errors : undefined }
+      })
+    }
+
+    // 构建批量插入 SQL
+    const fields = Object.keys(toInsert[0])
+    const placeholders = fields.map(() => '?').join(', ')
+    const sql = `INSERT INTO inventory (${fields.join(', ')}) VALUES (${placeholders})`
 
     let successCount = 0
     let errorCount = 0
 
-    // 逐条执行以便区分成功/失败条数并收集 ER_DUP_ENTRY 等错误信息
-    for (const record of insertData) {
+    for (const record of toInsert) {
       try {
-        const recordValues = fields.map(field => record[field])
+        const recordValues = fields.map((field: string) => record[field])
         await pool.execute(sql, recordValues)
         successCount++
       } catch (error: any) {
         errorCount++
         console.error('插入数据失败:', error)
-        if (error.code === 'ER_DUP_ENTRY') {
-          errors.push(`库存单号(transaction_id) ${record.transaction_id} 已存在`)
-        } else {
-          errors.push(`插入数据失败: ${error.message}`)
-        }
+        errors.push(`插入失败 app_id=${record.app_id} transaction_id=${record.transaction_id}: ${error.message}`)
       }
     }
 

@@ -108,6 +108,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             remark: null as string | null,
             in_device: '',
             out_device: '',
+            import_type: 'upload',
             transaction_date: transaction_date ? new Date(transaction_date) : now,
             transaction_id,
             new_receipt: String(new_receipt).trim(),

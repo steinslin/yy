@@ -1,3 +1,4 @@
+import path from 'path'
 import express, { type Application, type Request, type Response } from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
@@ -52,6 +53,15 @@ app.get('/api/users', (req: Request, res: Response<User[]>) => {
   const users: User[] = [{ id: 1, name: '张三' }]
   res.json(users)
 })
+
+// 生产环境：由后端托管前端静态资源，单端口访问
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(process.cwd(), 'dist')
+  app.use(express.static(distPath))
+  app.get('*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
 
 // 启动服务器
 app.listen(port, async () => {

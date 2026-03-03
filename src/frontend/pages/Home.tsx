@@ -70,7 +70,7 @@ const Home = () => {
     inTimeRange: null as [any, any] | null,
     inAccount: '',
     inventoryNo: '',
-    outDevice: ''
+    importType: '' as '' | 'upload' | 'import'
   })
 
   // 表格数据状态
@@ -228,6 +228,13 @@ const Home = () => {
       width: 150
     },
     {
+      title: '入库类型',
+      dataIndex: 'import_type',
+      key: 'import_type',
+      width: 100,
+      render: (val: string) => (val === 'upload' ? '插件上传' : val === 'import' ? 'Excel导入' : val ?? '-')
+    },
+    {
       title: '客户端凭证',
       dataIndex: 'new_receipt',
       key: 'new_receipt',
@@ -377,8 +384,8 @@ const Home = () => {
       if (searchForm.inventoryNo) {
         params.inventory_no = searchForm.inventoryNo
       }
-      if (searchForm.outDevice) {
-        params.out_device = searchForm.outDevice
+      if (searchForm.importType) {
+        params.import_type = searchForm.importType
       }
 
       // 处理入库时间范围
@@ -575,7 +582,8 @@ const Home = () => {
         '使用时间',
         '备注',
         '入库设备',
-        '出库设备'
+        '出库设备',
+        '入库类型'
       ]
 
       // 状态映射
@@ -608,7 +616,8 @@ const Home = () => {
             row.used_time ? new Date(row.used_time).toLocaleString('zh-CN') : '',
             `"${(row.remark ?? '').replace(/"/g, '""')}"`,
             `"${(row.in_device ?? '').replace(/"/g, '""')}"`,
-            `"${(row.out_device ?? '').replace(/"/g, '""')}"`
+            `"${(row.out_device ?? '').replace(/"/g, '""')}"`,
+            (row.import_type === 'upload' ? '插件上传' : row.import_type === 'import' ? 'Excel导入' : row.import_type ?? '')
           ].join(',')
         })
       ]
@@ -724,7 +733,7 @@ const Home = () => {
       inTimeRange: null,
       inAccount: '',
       inventoryNo: '',
-      outDevice: ''
+      importType: '' as '' | 'upload' | 'import'
     })
     setPagination({ ...pagination, current: 1 })
     // 重置后重新加载数据
@@ -861,14 +870,20 @@ const Home = () => {
                     />
                   </div>
                   <div className="search-form-item">
-                    <label className="search-label">出库设备</label>
-                    <Input
-                      placeholder="请输入出库设备"
-                      value={searchForm.outDevice}
-                      onChange={e => {
-                        setSearchForm({ ...searchForm, outDevice: e.target.value })
+                    <label className="search-label">入库类型</label>
+                    <Select
+                      placeholder="请选择入库类型"
+                      allowClear
+                      value={searchForm.importType || undefined}
+                      onChange={value => {
+                        setSearchForm({ ...searchForm, importType: (value as '' | 'upload' | 'import') ?? '' })
                       }}
                       style={{ width: 288 }}
+                      options={[
+                        { label: '全部', value: '' },
+                        { label: '插件上传', value: 'upload' },
+                        { label: 'Excel导入', value: 'import' }
+                      ]}
                     />
                   </div>
                 </div>
@@ -1026,6 +1041,9 @@ const Home = () => {
             </Descriptions.Item>
             <Descriptions.Item label="入库设备">{detailRecord.in_device ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="出库设备">{detailRecord.out_device ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="入库类型">
+              {detailRecord.import_type === 'upload' ? '插件上传' : detailRecord.import_type === 'import' ? 'Excel导入' : detailRecord.import_type ?? '-'}
+            </Descriptions.Item>
             <Descriptions.Item label="备注" span={2}>
               {detailRecord.remark ?? '-'}
             </Descriptions.Item>

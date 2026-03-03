@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/backend/index.ts",
     "dev:2": "vite",
+    "build": "vite build",
     "build:frontend": "vite build",
+    "start": "set NODE_ENV=production&& ts-node src/backend/index.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\"",
