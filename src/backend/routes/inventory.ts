@@ -329,7 +329,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
     if (keys.length > 0) {
       const placeholders = keys.map(() => '(?, ?, ?)').join(', ')
       const params = keys.flat()
-      const [existingRows] = await pool.execute<unknown[]>(
+      const [existingRows] = await pool.execute(
         `SELECT app_id, tier_code, transaction_id FROM inventory WHERE (app_id, tier_code, transaction_id) IN (${placeholders})`,
         params
       )
@@ -358,6 +358,7 @@ router.post('/import', verifyToken, upload.single('file'), async (req: Request, 
     }
 
     // 构建批量插入 SQL
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const fields = Object.keys(toInsert[0])
     const placeholders = fields.map(() => '?').join(', ')
     const sql = `INSERT INTO inventory (${fields.join(', ')}) VALUES (${placeholders})`

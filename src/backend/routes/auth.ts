@@ -24,7 +24,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const [rows] = (await pool.execute(
       'SELECT id, username, password, email FROM users WHERE username = ?',
       [username]
-    )) as Array<Array<{ id: number; username: string; password: string; email: string | null }>>
+    )) as unknown as [Array<{ id: number; username: string; password: string; email: string | null }>]
 
     console.log('查询到的用户数量:', rows.length)
     console.log('查询用户名:', username)
@@ -108,7 +108,7 @@ router.post('/register', async (req: Request, res: Response) => {
     // 检查用户名是否已存在
     const [existingUsers] = (await pool.execute('SELECT id FROM users WHERE username = ?', [
       username
-    ])) as Array<Array<{ id: number }>>
+    ])) as unknown as [Array<{ id: number }>]
 
     if (existingUsers.length > 0) {
       return res.status(400).json({
@@ -197,14 +197,14 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
     const [rows] = (await pool.execute(
       'SELECT id, username, email, created_at FROM users WHERE id = ?',
       [userId]
-    )) as Array<
+    )) as unknown as [
       Array<{
         id: number
         username: string
         email: string | null
         created_at: Date
       }>
-    >
+    ]
 
     if (rows.length === 0) {
       return res.status(404).json({

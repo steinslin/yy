@@ -50,7 +50,13 @@ mysql -u root -p < src/backend/database/init.sql
 
 ### 4. 构建前端并启动服务
 
-**方式 A：一键脚本（推荐）**
+构建前端项目
+```bash
+# 构建前端（输出到 dist/）
+npm run build
+```
+
+**方式 A：一键脚本**
 
 双击运行项目根目录下的：
 
@@ -58,14 +64,11 @@ mysql -u root -p < src/backend/database/init.sql
 start-production.bat
 ```
 
-脚本会依次：检查依赖 → 构建前端 → 以生产模式启动后端（并托管前端）。
+脚本会在生产模式启动后端（并托管前端）。
 
 **方式 B：命令行**
 
 ```bash
-# 构建前端（输出到 dist/）
-npm run build
-
 # 生产模式启动（后端托管 dist，单端口）
 npm run start
 ```

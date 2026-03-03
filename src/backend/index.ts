@@ -58,7 +58,8 @@ app.get('/api/users', (req: Request, res: Response<User[]>) => {
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(process.cwd(), 'dist')
   app.use(express.static(distPath))
-  app.get('*', (_req: Request, res: Response) => {
+  // Express 5 + path-to-regexp v8 不支持 '*'，用正则匹配非 /api 的 GET 请求作为 SPA 回退（含 /）
+  app.get(/^\/(?!api\/).*$/, (_req: Request, res: Response) => {
     res.sendFile(path.join(distPath, 'index.html'))
   })
 }

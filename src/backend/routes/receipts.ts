@@ -66,8 +66,8 @@ router.post('/upload', async (req: Request, res: Response) => {
         }
 
         // 上传前校验：该 app_id+product_id 必须在 app_products 中已配置，且必填字段齐全（用于补全 app_name、tier_name 等）
-        const [rows] = await pool.execute<unknown[]>('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])
-        const app_product = rows?.[0] as AppProductRow | undefined
+        const [rows] = (await pool.execute('SELECT * FROM app_products WHERE app_id = ? AND product_id = ? LIMIT 1', [app_id, product_id])) as unknown as [AppProductRow[]]
+        const app_product = rows?.[0]
         console.log('/upload app_product', app_product)
         if (!app_product) {
             return send(1, 'app_product 不存在')
@@ -84,10 +84,10 @@ router.post('/upload', async (req: Request, res: Response) => {
         const currency_code = 'CNY' // TODO
 
         // 去重：同一笔交易（app_id + tier_code + transaction_id）只允许一条库存记录，避免客户端重复上传
-        const [existing] = await pool.execute<unknown[]>(
+        const [existing] = (await pool.execute(
             'SELECT id FROM inventory WHERE app_id = ? AND tier_code = ? AND transaction_id = ? LIMIT 1',
             [app_id, tier_code, transaction_id]
-        )
+        )) as unknown as [unknown[]]
         if (Array.isArray(existing) && existing.length > 0) {
             console.log('/upload duplicate skipped', { app_id, product_id, transaction_id })
             return send(1, '凭证已存在，不重复插入')
@@ -109,6 +109,7 @@ router.post('/upload', async (req: Request, res: Response) => {
             in_device: '',
             out_device: '',
             import_type: 'upload',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             transaction_date: transaction_date ? new Date(transaction_date) : now,
             transaction_id,
             new_receipt: String(new_receipt).trim(),
