@@ -1,8 +1,30 @@
 import express, { type Request, type Response } from 'express'
+import multer from 'multer'
+import * as XLSX from 'xlsx'
 import pool from '../config/database'
 import { verifyToken } from './auth'
+import {
+  appProductsExcelMapping,
+  getAppProductsRequiredFields
+} from '../config/excelMapping'
 
 const router = express.Router()
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
+    ]
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('只支持上传 Excel 文件 (.xlsx, .xls)'))
+    }
+  }
+})
 
 /** 游戏档位管理：分页列表，需 token */
 router.get('/', verifyToken, async (req: Request, res: Response) => {
@@ -44,7 +66,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       : 0
 
     const [rows] = await pool.execute(
-      `SELECT id, app_id, app_name, product_id, name, price, quantity, created_at, updated_at FROM app_products${whereClause} ORDER BY id LIMIT ${pageSize} OFFSET ${offset}`,
+      `SELECT id, app_id, app_name, product_id, name, price, quantity, created_at, updated_at FROM app_products${whereClause} ORDER BY created_at DESC, id DESC LIMIT ${pageSize} OFFSET ${offset}`,
       params
     )
     const list = (rows as Array<Record<string, unknown>>) ?? []
@@ -92,6 +114,127 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
   } catch (err) {
     console.error('POST /api/products error:', err)
     return res.status(500).json({ success: false, message: (err as Error).message })
+  }
+})
+
+/** 游戏档位管理：批量导入 Excel，按 app_id+product_id 过滤已存在记录，需 token */
+router.post('/import', verifyToken, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '请上传文件' })
+    }
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' })
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null }) as unknown[][]
+    if (rawData.length < 2) {
+      return res.status(400).json({ success: false, message: 'Excel 至少需要表头和数据行' })
+    }
+    const headers = (rawData[0] as unknown[]).map(h => String(h ?? '').trim())
+    const requiredFields = getAppProductsRequiredFields()
+    const missingHeaders = requiredFields.filter(f => !headers.some(h => h === f))
+    if (missingHeaders.length > 0) {
+      return res.status(400).json({ success: false, message: `缺少必填列: ${missingHeaders.join(', ')}` })
+    }
+    const columnIndexMap: Record<string, number> = {}
+    headers.forEach((h, i) => {
+      const m = appProductsExcelMapping.find(x => x.excelColumn === h)
+      if (m) columnIndexMap[m.dbField] = i
+    })
+    const insertData: Array<Record<string, unknown>> = []
+    const errors: string[] = []
+    for (let i = 1; i < rawData.length; i++) {
+      const row = rawData[i] as unknown[]
+      if (row.every(c => c === null || c === undefined || String(c).trim() === '')) continue
+      const record: Record<string, unknown> = {}
+      for (const m of appProductsExcelMapping) {
+        const idx = columnIndexMap[m.dbField]
+        if (idx != null && idx < row.length) {
+          let v = row[idx]
+          if (m.transform && v != null) v = m.transform(v)
+          if ((v === null || v === undefined || String(v).trim() === '') && !m.required) v = m.defaultValue ?? null
+          record[m.dbField] = v
+        } else if (m.defaultValue !== undefined) record[m.dbField] = m.defaultValue
+      }
+      const missing = requiredFields.filter(f => {
+        const field = appProductsExcelMapping.find(m => m.excelColumn === f)?.dbField
+        const v = field ? record[field] : undefined
+        return v === null || v === undefined || String(v).trim() === ''
+      })
+      if (missing.length > 0) {
+        errors.push(`第 ${i + 2} 行缺少: ${missing.join(', ')}`)
+        continue
+      }
+      record.app_id = String(record.app_id ?? '').trim()
+      record.app_name = String(record.app_name ?? '').trim()
+      record.product_id = String(record.product_id ?? '').trim()
+      record.name = String(record.name ?? '').trim()
+      record.price = String(record.price ?? '').trim()
+      record.quantity = Number(record.quantity) || 0
+      insertData.push(record)
+    }
+    if (insertData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: errors.length > 0 ? '数据验证失败' : '没有有效数据可导入',
+        data: { errors: errors.length ? errors : undefined }
+      })
+    }
+    const keys = insertData.map(r => [r.app_id, r.product_id] as [string, string])
+    const existingSet = new Set<string>()
+    if (keys.length > 0) {
+      const placeholders = keys.map(() => '(?, ?)').join(', ')
+      const params = keys.flat()
+      const [existingRows] = (await pool.execute(
+        `SELECT app_id, product_id FROM app_products WHERE (app_id, product_id) IN (${placeholders})`,
+        params
+      )) as unknown as [Array<{ app_id: string; product_id: string }>]
+      const rows = Array.isArray(existingRows) ? existingRows : []
+      for (const r of rows) existingSet.add(`${r.app_id}|${r.product_id}`)
+    }
+    const toInsert: Array<Record<string, unknown>> = []
+    for (const r of insertData) {
+      const key = `${r.app_id}|${r.product_id}`
+      if (existingSet.has(key)) {
+        errors.push(`app_id=${r.app_id} product_id=${r.product_id} 已存在，已跳过`)
+        continue
+      }
+      toInsert.push(r)
+      existingSet.add(key)
+    }
+    if (toInsert.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '所有记录均已存在，无需导入',
+        data: { errors: errors.length ? errors : undefined }
+      })
+    }
+    const sql = 'INSERT INTO app_products (app_id, app_name, product_id, name, price, quantity) VALUES (?, ?, ?, ?, ?, ?)'
+    let successCount = 0
+    let errorCount = 0
+    for (const r of toInsert) {
+      try {
+        await pool.execute(sql, [
+          r.app_id,
+          r.app_name,
+          r.product_id,
+          r.name,
+          r.price,
+          r.quantity
+        ])
+        successCount++
+      } catch (e: unknown) {
+        errorCount++
+        errors.push(`插入失败 app_id=${r.app_id} product_id=${r.product_id}: ${(e as Error).message}`)
+      }
+    }
+    return res.json({
+      success: true,
+      message: `导入完成: 成功 ${successCount} 条，失败 ${errorCount} 条`,
+      data: { total: toInsert.length, success: successCount, failed: errorCount, errors: errors.length ? errors : undefined }
+    })
+  } catch (err) {
+    console.error('POST /api/products/import error:', err)
+    return res.status(500).json({ success: false, message: (err as Error).message ?? '导入失败' })
   }
 })
 

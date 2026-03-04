@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS app_products (
   app_id VARCHAR(100) NOT NULL COMMENT '应用ID',
   app_name VARCHAR(200) COMMENT '应用名称',
   product_id VARCHAR(100) NOT NULL COMMENT '商品ID',
-  name VARCHAR(200) COMMENT '商品名称',
+  name VARCHAR(200) COMMENT '档位名称',
   price VARCHAR(50) COMMENT '价格',
   quantity INT NOT NULL DEFAULT 0 COMMENT '数量',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

@@ -33,7 +33,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   RightOutlined,
-  DownOutlined
+  DownOutlined,
+  UploadOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
@@ -242,6 +243,60 @@ const GameTierManage = () => {
     }
   }
 
+  /** 批量导入 Excel */
+  const handleBatchImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.xlsx,.xls'
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ]
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+        message.error('只支持上传 Excel 文件 (.xlsx, .xls)')
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        message.error('文件大小不能超过 10MB')
+        return
+      }
+      const formData = new FormData()
+      formData.append('file', file)
+      const hide = message.loading('正在导入数据...', 0)
+      try {
+        const res = await api.post('/products/import', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        hide()
+        if (res.data?.success) {
+          const { success, failed, errors } = res.data.data ?? {}
+          if (failed === 0) {
+            message.success(`成功导入 ${success} 条数据`)
+          } else {
+            message.warning(
+              `导入完成: 成功 ${success} 条，失败 ${failed} 条${
+                errors?.length ? `\n${errors.slice(0, 5).join('; ')}` : ''
+              }`
+            )
+          }
+          fetchList()
+        } else {
+          message.error(res.data?.message ?? '导入失败')
+        }
+      } catch (err: unknown) {
+        hide()
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '导入失败'
+        message.error(msg)
+      }
+      target.value = ''
+    }
+    input.click()
+  }
+
   /** 删除指定档位并刷新列表 */
   const handleDelete = async (id: number) => {
     try {
@@ -281,7 +336,12 @@ const GameTierManage = () => {
       }
     }
     const list = Array.from(map.values())
-    list.sort((a, b) => a.app_id.localeCompare(b.app_id))
+    list.sort((a, b) => {
+      const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0
+      const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0
+      if (tb !== ta) return tb - ta
+      return a.app_id.localeCompare(b.app_id)
+    })
     // 子表按 product_id 排序更直观
     for (const g of list) {
       g.tiers.sort((a, b) => String(a.product_id ?? '').localeCompare(String(b.product_id ?? '')))
@@ -418,9 +478,19 @@ const GameTierManage = () => {
                     />
                   </div>
                 </div>
-                <div className="search-form-row" style={{ justifyContent: 'flex-end', marginTop: 16, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
-                  <Button type="primary" onClick={handleSearch}>搜索</Button>
-                  <Button onClick={handleReset} style={{ marginLeft: 2 }}>重置</Button>
+                <div className="search-form-row" style={{ justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
+                  <Button
+                    type="primary"
+                    icon={<UploadOutlined />}
+                    onClick={handleBatchImport}
+                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  >
+                    批量导入
+                  </Button>
+                  <div>
+                    <Button type="primary" onClick={handleSearch}>搜索</Button>
+                    <Button onClick={handleReset} style={{ marginLeft: 8 }}>重置</Button>
+                  </div>
                 </div>
               </div>
             </div>

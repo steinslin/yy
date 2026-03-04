@@ -170,3 +170,30 @@ export function getDbFieldByExcelColumn(excelColumn: string): string | undefined
 export function getRequiredFields(): string[] {
   return inventoryExcelMapping.filter(m => m.required).map(m => m.excelColumn)
 }
+
+/** 应用商品（游戏档位）Excel 导入字段映射：应用ID、应用名称、商品ID、档位名称、价格、数量 */
+export const appProductsExcelMapping: ExcelColumnMapping[] = [
+  { excelColumn: '应用ID', dbField: 'app_id', required: true },
+  { excelColumn: '应用名称', dbField: 'app_name', required: true },
+  { excelColumn: '商品ID', dbField: 'product_id', required: true },
+  { excelColumn: '档位名称', dbField: 'name', required: true },
+  {
+    excelColumn: '价格',
+    dbField: 'price',
+    required: true,
+    transform: (value: unknown) => (value != null ? String(value).trim() : '')
+  },
+  {
+    excelColumn: '数量',
+    dbField: 'quantity',
+    required: true,
+    transform: (value: unknown) => {
+      const num = Number(value)
+      return Number.isFinite(num) ? Math.max(0, Math.floor(num)) : 0
+    }
+  }
+]
+
+export function getAppProductsRequiredFields(): string[] {
+  return appProductsExcelMapping.filter(m => m.required).map(m => m.excelColumn)
+}
